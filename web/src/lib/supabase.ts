@@ -21,6 +21,9 @@ export type Place = {
   url: string | null
   near: string | null
   approximate: boolean
+  city: string | null
+  state: string | null
+  country: string | null
   visited: boolean
   visited_at: string | null
   created_at: string

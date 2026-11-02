@@ -4,7 +4,7 @@ import type { Place } from './supabase'
 
 const place = (name: string, lat: number, lng: number, visited = false): Place => ({
   id: name, user_id: 'u', name, lat, lng, visited,
-  notes: null, category: null, address: null, url: null, near: null, approximate: false, visited_at: null, created_at: '',
+  notes: null, category: null, address: null, url: null, near: null, approximate: false, city: null, state: null, country: null, visited_at: null, created_at: '',
 })
 
 // Rough I-40 line: Nashville -> Knoxville

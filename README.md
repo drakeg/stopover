@@ -73,8 +73,12 @@ All three live in `web/src/lib/geo.ts` and `MapView.tsx`. Before opening the app
 
 - Sign up (optional name), sign in, **forgot password** → email link → choose a new password
 - **Account page** (gear button, top right): name, change email (confirmed by email), change password,
-  usual detour distance and preferred maps app, export places as **GPX** (Garmin/GPS apps) or **CSV**, sign out,
+  usual detour distance and preferred maps app, sign out,
   and **delete account** (removes places, trips and profile; required for App Store / Play Store listing)
+
+- **Saved places list** on the Account page: search (names, notes, towns, exits), filter by state, type and
+  visited/to-visit, "approximate pins only", sort by newest/oldest/name/state; download the current results as
+  **GPX** (Garmin and other GPS apps) or **CSV**. City/state are filled in automatically from each pin.
 
 ## Before opening it to the public
 

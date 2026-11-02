@@ -12,7 +12,23 @@ export const KM_PER_MI = 1.609344
 // Swap these two functions to move to a paid provider later.
 const NOMINATIM = 'https://nominatim.openstreetmap.org'
 
-type NominatimResult = { lat: string; lon: string; display_name: string; name?: string }
+type NominatimResult = {
+  lat: string; lon: string; display_name: string; name?: string
+  address?: Record<string, string | undefined>
+}
+
+export type Locality = { city: string | null; state: string | null; country: string | null }
+
+/** City / state code / country from a Nominatim address block. */
+export function localityFrom(addr: Record<string, string | undefined> = {}): Locality {
+  const iso = addr['ISO3166-2-lvl4'] // e.g. "US-TN", "CA-ON"
+  const state = iso?.includes('-') ? iso.split('-')[1] : (addr.state ?? null)
+  return {
+    city: addr.city ?? addr.town ?? addr.village ?? addr.hamlet ?? addr.municipality ?? null,
+    state,
+    country: addr.country_code ? addr.country_code.toUpperCase() : null,
+  }
+}
 
 const valid = (lat: number, lng: number) =>
   Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
@@ -97,14 +113,14 @@ export async function searchPlaces(query: string, near?: LatLng): Promise<Locate
   return mergeResults(a.status === 'fulfilled' ? a.value : [], b.status === 'fulfilled' ? b.value : [])
 }
 
-export async function reverseGeocode(p: LatLng): Promise<{ name: string; address: string } | null> {
-  const res = await fetch(`${NOMINATIM}/reverse?format=jsonv2&zoom=17&lat=${p.lat}&lon=${p.lng}`, {
+export async function reverseGeocode(p: LatLng): Promise<({ name: string; address: string } & Locality) | null> {
+  const res = await fetch(`${NOMINATIM}/reverse?format=jsonv2&zoom=17&addressdetails=1&lat=${p.lat}&lon=${p.lng}`, {
     headers: { Accept: 'application/json' },
   })
   if (!res.ok) return null
   const r: NominatimResult = await res.json()
   if (!r?.display_name) return null
-  return { name: r.name || r.display_name.split(',')[0], address: r.display_name }
+  return { name: r.name || r.display_name.split(',')[0], address: r.display_name, ...localityFrom(r.address) }
 }
 
 // ---------- Routing (OSRM) ----------

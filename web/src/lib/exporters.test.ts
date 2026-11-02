@@ -5,7 +5,7 @@ import type { Place } from './supabase'
 const p: Place = {
   id: '1', user_id: 'u', name: 'Rock & Roll <Museum>', near: 'I-40 exit 356', category: 'Museum',
   notes: 'Big lot, "RV friendly", ok', address: 'Oak Ridge, TN', lat: 36.0104, lng: -84.2696, url: null,
-  approximate: false, visited: false, visited_at: null, created_at: '2026-11-02',
+  approximate: false, city: 'Oak Ridge', state: 'TN', country: 'US', visited: false, visited_at: null, created_at: '2026-11-02',
 }
 
 describe('placesToGpx', () => {

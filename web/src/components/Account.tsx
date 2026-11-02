@@ -1,24 +1,25 @@
 import { useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { download, placesToCsv, placesToGpx } from '../lib/exporters'
 import { appUrl, saveProfile, supabase, type MapsPref, type Place, type Profile } from '../lib/supabase'
 import { friendlyAuthError, MIN_PASSWORD } from './Auth'
+import { SavedPlaces } from './SavedPlaces'
 
 type Msg = { kind: 'ok' | 'error'; text: string } | null
 const Note = ({ msg }: { msg: Msg }) => (msg ? <p className={msg.kind} role="status">{msg.text}</p> : null)
 
 const DETOURS = [5, 10, 25, 50, 100]
 
-export function Account({ user, profile, places, onProfile, onClose }: {
+export function Account({ user, profile, places, onProfile, onClose, onEditPlace }: {
   user: User; profile: Profile; places: Place[]; onProfile: (p: Profile) => void; onClose: () => void
+  onEditPlace: (p: Place) => void
 }) {
   return (
     <>
       <button className="btn link" onClick={onClose}>‹ Back</button>
       <ProfileCard user={user} profile={profile} onProfile={onProfile} />
+      <SavedPlaces places={places} onEdit={onEditPlace} />
       <EmailCard user={user} />
       <PasswordCard />
-      <ExportCard places={places} />
       <section className="card stack">
         <h2>Sign out</h2>
         <button className="btn wide" onClick={() => supabase.auth.signOut()}>Sign out of Stopover</button>
@@ -132,25 +133,6 @@ function PasswordCard() {
       <Note msg={msg} />
       <button className="btn" disabled={busy}>{busy ? 'Saving…' : 'Change password'}</button>
     </form>
-  )
-}
-
-function ExportCard({ places }: { places: Place[] }) {
-  const stamp = new Date().toISOString().slice(0, 10)
-  return (
-    <section className="card stack">
-      <h2>Export your places</h2>
-      <p className="muted small">
-        {places.length} place{places.length === 1 ? '' : 's'}. GPX opens in Garmin and most GPS and mapping apps; CSV opens in Excel,
-        Numbers or Google Sheets.
-      </p>
-      <div className="row">
-        <button className="btn" disabled={!places.length}
-          onClick={() => download(`stopover-places-${stamp}.gpx`, placesToGpx(places), 'application/gpx+xml')}>Download GPX</button>
-        <button className="btn" disabled={!places.length}
-          onClick={() => download(`stopover-places-${stamp}.csv`, placesToCsv(places), 'text/csv')}>Download CSV</button>
-      </div>
-    </section>
   )
 }
 

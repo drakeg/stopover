@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { DEFAULT_PROFILE, loadProfile, supabase, type NewPlace, type Place, type PlacePatch, type Profile, type Trip } from './lib/supabase'
 import { reverseGeocode } from './lib/geo'
@@ -23,6 +23,7 @@ export default function App() {
   const [showAccount, setShowAccount] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [editFromAccount, setEditFromAccount] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -62,22 +63,59 @@ export default function App() {
     if (session) { loadPlaces(); loadTrips() }
   }, [session, loadPlaces, loadTrips])
 
+  /**
+   * Fills in city/state (and the address, if missing) from the pin, in the background.
+   * Saving never waits on this; the free address service allows ~1 lookup per second.
+   */
+  const enrich = useCallback(async (p: Place) => {
+    const r = await reverseGeocode(p).catch(() => null)
+    if (!r) return
+    const patch: PlacePatch = { city: r.city, state: r.state, country: r.country, ...(p.address ? {} : { address: r.address }) }
+    const { data } = await supabase.from('places').update(patch).eq('id', p.id).select().single()
+    if (data) setPlaces((ps) => ps.map((x) => (x.id === p.id ? (data as Place) : x)))
+  }, [])
+
+  // One-time backfill for places saved before city/state were tracked.
+  // A single queue, so lookups stay ~1.2 s apart however often the list re-renders.
+  const backfilled = useRef(new Set<string>())
+  const queue = useRef<Place[]>([])
+  const draining = useRef(false)
+  useEffect(() => {
+    for (const p of places) {
+      if (!p.state && !backfilled.current.has(p.id)) {
+        backfilled.current.add(p.id)
+        queue.current.push(p)
+      }
+    }
+    if (draining.current || !queue.current.length) return
+    draining.current = true
+    ;(async () => {
+      while (queue.current.length) {
+        await enrich(queue.current.shift()!)
+        await new Promise((r) => setTimeout(r, 1200))
+      }
+      draining.current = false
+    })()
+  }, [places, enrich])
+
   async function addPlace(p: NewPlace) {
     const { data, error } = await supabase.from('places').insert(p).select().single()
     if (error) throw error
     setAdding(false)
+    backfilled.current.add((data as Place).id)
     setPlaces((ps) => [data as Place, ...ps])
-    // Quick adds skip the address lookup so saving is instant; fill it in afterwards.
-    if (!p.address) {
-      reverseGeocode(p).then((r) => r && updatePlace(data as Place, { address: r.address }, false)).catch(() => {})
-    }
+    enrich(data as Place)
   }
 
   async function updatePlace(p: Place, patch: PlacePatch, close = true) {
     const { data, error } = await supabase.from('places').update(patch).eq('id', p.id).select().single()
     if (error) throw error
     setPlaces((ps) => ps.map((x) => (x.id === p.id ? (data as Place) : x)))
-    if (close) setEditing(null)
+    if (patch.lat !== undefined) enrich(data as Place) // moved: city/state may have changed
+    if (close) {
+      setEditing(null)
+      if (editFromAccount) { setShowAccount(true); setEditFromAccount(false) }
+    }
   }
 
   async function toggleVisited(p: Place) {
@@ -119,13 +157,23 @@ export default function App() {
         {toast && <p className="ok banner-ok" onClick={() => setToast(null)}>{toast}</p>}
         {err && <p className="error banner" onClick={() => setErr(null)}>{err}</p>}
         {showAccount && profile && (
-          <Account user={session.user} profile={profile} places={places} onProfile={setProfile} onClose={() => setShowAccount(false)} />
+          <Account
+            user={session.user}
+            profile={profile}
+            places={places}
+            onProfile={setProfile}
+            onClose={() => setShowAccount(false)}
+            onEditPlace={(p) => { setEditing(p); setTab('places'); setShowAccount(false); setEditFromAccount(true) }}
+          />
         )}
         {!showAccount && tab === 'places' && (
           adding
             ? <AddPlace onSave={addPlace} onCancel={() => setAdding(false)} />
             : editing
-            ? <EditPlace place={editing} onSave={(patch) => updatePlace(editing, patch)} onCancel={() => setEditing(null)} />
+            ? <EditPlace place={editing} onSave={(patch) => updatePlace(editing, patch)} onCancel={() => {
+                setEditing(null)
+                if (editFromAccount) { setShowAccount(true); setEditFromAccount(false) }
+              }} />
             : <>
                 <button className="btn primary wide add" onClick={() => setAdding(true)}>＋ Add a place</button>
                 <PlacesList places={places} onEdit={setEditing} onToggleVisited={toggleVisited} onDelete={deletePlace} />
