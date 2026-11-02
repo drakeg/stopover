@@ -69,8 +69,12 @@ export function EditPlace({ place, onSave, onCancel }: {
           {approximate && (
             <a className="btn small" href={directionsUrl({ ...place, name })} target="_blank" rel="noreferrer">Find “{name}” in Maps ↗</a>
           )}
-          <LocationSearch placeholder="Search nearby, or paste coordinates" onSelect={(l) => move(l, l.label)} />
+          <LocationSearch placeholder="Paste coordinates or a maps link, or search" onSelect={(l) => move(l, l.label || undefined)} />
           <MapView height={260} pins={[{ ...spot, id: 'edit', title: name, kind: 'draft' }]} onPick={(p) => move(p)} />
+          <p className="muted small">
+            {spot.lat.toFixed(5)}, {spot.lng.toFixed(5)}
+            {moved && <strong className="ok"> · new location — tap Save changes to keep it</strong>}
+          </p>
           {address && <p className="muted small">{address}</p>}
           <label className="toggle">
             <input type="checkbox" checked={approximate} onChange={(e) => setApproximate(e.target.checked)} />
