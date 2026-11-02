@@ -34,9 +34,11 @@ The Supabase URL and publishable key are built in (they're meant to be public; r
 
 ## Hosting the website
 
-`web/dist` is a static site. Netlify, Vercel, Cloudflare Pages or GitHub Pages all work (build command `npm run build`, base directory `web`, publish `dist`).
+**GitHub Pages (set up):** every push to `main` runs the tests, builds, and publishes to **https://drakeg.github.io/stopover/** via `.github/workflows/deploy.yml`. One-time: repo **Settings → Pages → Source: GitHub Actions**.
 
-After it's live, in the Supabase dashboard → **Authentication → URL Configuration**, set **Site URL** to the live address so sign-up confirmation emails link back to it.
+`web/dist` is a plain static site, so Netlify, Vercel or Cloudflare Pages also work (base directory `web`, build `npm run build`, publish `dist`).
+
+After it's live, in the Supabase dashboard → **Authentication → URL Configuration**, set **Site URL** to `https://drakeg.github.io/stopover/` so sign-up confirmation emails link back to it.
 
 ## Phone apps (Mac)
 
