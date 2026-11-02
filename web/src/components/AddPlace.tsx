@@ -80,15 +80,16 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
         </button>
       )}
       {mode === 'search' && (
-        <LocationSearch placeholder="e.g. Manhattan Project Oak Ridge TN" onSelect={(l) => chooseSpot(l, l.label)} />
+        <LocationSearch placeholder="Name, address, coordinates or Google Maps link" onSelect={(l) => chooseSpot(l, l.label)} />
       )}
-      {mode === 'map' && <p className="muted">Tap the map where the place is.</p>}
+      {mode === 'map' && <p className="muted">Zoom in and tap the map where the place is.</p>}
+      {spot && mode !== 'map' && <p className="muted small">Pin not quite right? Tap the map to move it.</p>}
 
       {(mode === 'map' || spot) && (
         <MapView
           height={220}
           pins={spot ? [{ ...spot, id: 'draft', title: name || 'New place', kind: 'draft' }] : []}
-          onPick={mode === 'map' ? (p) => chooseSpot(p) : undefined}
+          onPick={(p) => chooseSpot(p)}
         />
       )}
 

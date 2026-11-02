@@ -36,7 +36,7 @@ export function LocationSearch({
       {err && <p className="error">{err}</p>}
       {results && (
         <ul className="results">
-          {results.length === 0 && <li className="muted">No matches. Try adding a city or state.</li>}
+          {results.length === 0 && <li className="muted">No matches. Try a nearby landmark, an address, or paste coordinates or a Google Maps link.</li>}
           {results.map((r, i) => (
             <li key={i}>
               <button

@@ -14,16 +14,87 @@ const NOMINATIM = 'https://nominatim.openstreetmap.org'
 
 type NominatimResult = { lat: string; lon: string; display_name: string; name?: string }
 
-export async function searchPlaces(query: string): Promise<Located[]> {
-  const q = query.trim()
-  if (!q) return []
+const valid = (lat: number, lng: number) =>
+  Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+
+/**
+ * Pulls coordinates out of pasted text: "36.01, -84.27", or a Google / Apple
+ * Maps link (…/@36.01,-84.27,15z, ?q=36.01,-84.27, ?ll=…, !3d36.01!4d-84.27).
+ */
+export function parseCoordinates(text: string): LatLng | null {
+  const t = decodeURIComponent(text.trim())
+  const num = String.raw`(-?\d{1,3}(?:\.\d+)?)`
+  const patterns = [
+    new RegExp(String.raw`!3d${num}!4d${num}`), // Google place pin (most precise)
+    new RegExp(String.raw`@${num},\s*${num}`), // Google map view
+    new RegExp(String.raw`[?&](?:q|ll|query|daddr|destination|sll)=${num},\s*${num}`),
+    new RegExp(String.raw`^${num}\s*[,\s]\s*${num}$`), // bare "lat, lng"
+  ]
+  for (const re of patterns) {
+    const m = t.match(re)
+    if (m && valid(+m[1], +m[2])) return { lat: +m[1], lng: +m[2] }
+  }
+  return null
+}
+
+const SHORT_LINK = /^(https?:\/\/)?(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs)\//i
+
+// Photon (OSM-based, typo-tolerant, good at landmarks) — tried alongside Nominatim
+const PHOTON = 'https://photon.komoot.io/api'
+
+type PhotonFeature = {
+  geometry: { coordinates: [number, number] }
+  properties: {
+    name?: string; housenumber?: string; street?: string; city?: string; county?: string
+    state?: string; countrycode?: string; country?: string
+  }
+}
+
+async function photon(q: string, near?: LatLng): Promise<Located[]> {
+  const bias = near ? `&lat=${near.lat}&lon=${near.lng}` : ''
+  const res = await fetch(`${PHOTON}/?limit=8&lang=en&q=${encodeURIComponent(q)}${bias}`)
+  if (!res.ok) throw new Error(`Photon ${res.status}`)
+  const data: { features: PhotonFeature[] } = await res.json()
+  return data.features
+    .filter((f) => ['US', 'CA'].includes((f.properties.countrycode ?? '').toUpperCase()))
+    .map((f) => {
+      const p = f.properties
+      const street = [p.housenumber, p.street].filter(Boolean).join(' ')
+      const label = [...new Set([p.name, street, p.city, p.county, p.state])].filter(Boolean).join(', ')
+      return { lng: f.geometry.coordinates[0], lat: f.geometry.coordinates[1], label }
+    })
+}
+
+async function nominatim(q: string): Promise<Located[]> {
   const res = await fetch(
     `${NOMINATIM}/search?format=jsonv2&limit=6&countrycodes=us,ca&q=${encodeURIComponent(q)}`,
     { headers: { Accept: 'application/json' } },
   )
-  if (!res.ok) throw new Error(`Search failed (${res.status})`)
+  if (!res.ok) throw new Error(`Nominatim ${res.status}`)
   const data: NominatimResult[] = await res.json()
   return data.map((r) => ({ lat: +r.lat, lng: +r.lon, label: r.display_name }))
+}
+
+/** Merge result lists, dropping near-duplicates (within ~150 m). */
+export function mergeResults(...lists: Located[][]): Located[] {
+  const out: Located[] = []
+  for (const r of lists.flat()) {
+    if (!out.some((o) => Math.abs(o.lat - r.lat) < 0.0015 && Math.abs(o.lng - r.lng) < 0.0015)) out.push(r)
+  }
+  return out.slice(0, 8)
+}
+
+export async function searchPlaces(query: string, near?: LatLng): Promise<Located[]> {
+  const q = query.trim()
+  if (!q) return []
+  const coords = parseCoordinates(q)
+  if (coords) return [{ ...coords, label: `Pinned location (${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)})` }]
+  if (SHORT_LINK.test(q))
+    throw new Error('Short share links can’t be read. Open the link, then copy the full address-bar URL or the coordinates.')
+
+  const [a, b] = await Promise.allSettled([photon(q, near), nominatim(q)])
+  if (a.status === 'rejected' && b.status === 'rejected') throw new Error('Search is unavailable right now. Try again, or pick on the map.')
+  return mergeResults(a.status === 'fulfilled' ? a.value : [], b.status === 'fulfilled' ? b.value : [])
 }
 
 export async function reverseGeocode(p: LatLng): Promise<{ name: string; address: string } | null> {

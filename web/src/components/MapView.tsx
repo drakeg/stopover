@@ -25,11 +25,11 @@ function FitBounds({ pins, route }: { pins: MapPin[]; route?: [number, number][]
     const pts: [number, number][] = route?.length
       ? route.map(([lng, lat]) => [lat, lng])
       : pins.map((p) => [p.lat, p.lng])
-    if (pts.length === 1) map.setView(pts[0], 12)
+    if (pts.length === 1) map.setView(pts[0], Math.max(map.getZoom(), 13))
     else if (pts.length > 1) map.fitBounds(pts as LatLngBoundsExpression, { padding: [30, 30] })
     // Only refit when the set of things changes, not on every render
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, pins.length, route])
+  }, [map, route, pins.length === 1 ? `${pins[0].lat},${pins[0].lng}` : pins.length])
   return null
 }
 
