@@ -171,19 +171,56 @@ type Navigable = LatLng & { name: string; approximate?: boolean; near?: string |
  * mark where you were, not the place, so instead we let the maps app search for
  * the name near that spot — its search knows places by their signage names.
  */
+const isAppleDevice = (ua: string) => /iPhone|iPad|Macintosh/.test(ua)
+const ll = (p: LatLng) => `${+p.lat.toFixed(6)},${+p.lng.toFixed(6)}`
+
 export function directionsUrl(place: Navigable, userAgent = navigator.userAgent): string {
-  const isApple = /iPhone|iPad|Macintosh/.test(userAgent)
+  const apple = isAppleDevice(userAgent)
   const { lat, lng, name } = place
+  // Apple's "unified" map links (iOS 18.4 / macOS 15.4+); the old ?daddr= form is unreliable now.
   if (!place.approximate) {
-    return isApple
-      ? `https://maps.apple.com/?daddr=${lat},${lng}&q=${encodeURIComponent(name)}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+    return apple
+      ? `https://maps.apple.com/directions?destination=${ll(place)}&mode=driving`
+      : `https://www.google.com/maps/dir/?api=1&destination=${ll(place)}&travelmode=driving`
   }
-  if (isApple) return `https://maps.apple.com/?q=${encodeURIComponent(name)}&sll=${lat},${lng}&z=11`
+  if (apple) return `https://maps.apple.com/search?query=${encodeURIComponent(name)}&center=${lat},${lng}`
   // Google's link format has no "near" parameter, so add the town/county to the query
   const area = place.address?.split(',').slice(-4, -2).join(',').trim()
   const q = [name, area ? `near ${area}` : `near ${lat.toFixed(3)},${lng.toFixed(3)}`].join(' ')
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
+}
+
+export type TripLeg = { label: string; url: string }
+
+/** Stops per maps link. Google's documented limit in mobile browsers is 3 waypoints. */
+export const STOPS_PER_LEG = 3
+
+/**
+ * Turn-by-turn links for start → chosen stops → end, in Apple or Google Maps.
+ * Long trips are split into legs (each leg starts where the last one ended).
+ */
+export function tripLinks(
+  start: LatLng,
+  stops: (LatLng & { name: string })[],
+  end: LatLng,
+  userAgent = navigator.userAgent,
+): TripLeg[] {
+  const apple = isAppleDevice(userAgent)
+  const points: (LatLng & { name: string })[] = [{ ...start, name: 'Start' }, ...stops, { ...end, name: 'Destination' }]
+  const legs: TripLeg[] = []
+  for (let i = 0; i < points.length - 1; i += STOPS_PER_LEG + 1) {
+    const leg = points.slice(i, i + STOPS_PER_LEG + 2)
+    const from = leg[0]
+    const to = leg[leg.length - 1]
+    const via = leg.slice(1, -1)
+    const url = apple
+      ? `https://maps.apple.com/directions?source=${ll(from)}&destination=${ll(to)}` +
+        via.map((v) => `&waypoint=${ll(v)}`).join('') + '&mode=driving'
+      : `https://www.google.com/maps/dir/?api=1&origin=${ll(from)}&destination=${ll(to)}` +
+        (via.length ? `&waypoints=${via.map(ll).join('%7C')}` : '') + '&travelmode=driving'
+    legs.push({ label: `${from.name} → ${to.name}`, url })
+  }
+  return legs
 }
 
 export function formatMiles(mi: number): string {

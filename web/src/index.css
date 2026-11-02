@@ -115,3 +115,10 @@ a.btn { color: var(--green-2); }
 .tag { display: inline-block; margin-left: .4rem; font-size: .7rem; font-weight: 600; text-transform: uppercase;
   letter-spacing: .04em; background: #fef3c7; color: #92400e; border-radius: 4px; padding: .05rem .35rem; vertical-align: middle; }
 .build { text-align: center; padding: 1rem 0 1.5rem; opacity: .7; }
+
+.stops li { align-items: center; }
+.stops li.skipped { opacity: .5; }
+.stops li.skipped .name { text-decoration: line-through; }
+.include { display: flex; align-items: center; }
+.include input { width: 1.3rem; height: 1.3rem; accent-color: var(--green); }
+.trip-go { margin-top: 1rem; }

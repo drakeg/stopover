@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  directionsUrl, formatDuration, formatMiles, getRoute, reverseGeocode, stopsAlongRoute,
+  directionsUrl, formatDuration, formatMiles, getRoute, reverseGeocode, stopsAlongRoute, tripLinks,
   type Located, type Route,
 } from '../lib/geo'
 import { getCurrentLocation } from '../lib/location'
@@ -32,7 +32,10 @@ function Endpoint({ label, value, onChange, allowHere }: {
         {allowHere && <button className="btn link" onClick={here} disabled={busy}>{busy ? 'Locating…' : '📍 Use my location'}</button>}
       </div>
       {value && <div className="chosen">{value.label}</div>}
-      <LocationSearch placeholder="City, address or landmark" onSelect={onChange} />
+      <LocationSearch
+        placeholder="City, address or coordinates"
+        onSelect={(l) => onChange({ ...l, label: l.label || `${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}` })}
+      />
       {err && <p className="error">{err}</p>}
     </div>
   )
@@ -47,11 +50,23 @@ export function TripPlanner({ places, trips, onTripsChanged }: {
   const [route, setRoute] = useState<Route | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [skipped, setSkipped] = useState<Set<string>>(new Set())
 
   const stops = useMemo(
     () => (route ? stopsAlongRoute(places, route.coords, detour) : []),
     [route, places, detour],
   )
+  const chosen = stops.filter((s) => !skipped.has(s.place.id))
+  const legs = start && end && route
+    ? tripLinks(start, chosen.map((s) => ({ lat: s.place.lat, lng: s.place.lng, name: s.place.name })), end)
+    : []
+  const toggleStop = (id: string) =>
+    setSkipped((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
 
   async function plan(s = start, e = end) {
     if (!s || !e) return
@@ -138,9 +153,13 @@ export function TripPlanner({ places, trips, onTripsChanged }: {
           <MapView pins={pins} route={route.coords} height={360} />
           <h3>{stops.length ? `${stops.length} of your places along the way` : 'None of your places are near this route'}</h3>
           {!stops.length && <p className="muted">Try a wider detour distance, or add more places to your list.</p>}
+          {stops.length > 0 && <p className="muted small">Uncheck any you'll skip this time.</p>}
           <ol className="stops">
             {stops.map((s) => (
-              <li key={s.place.id}>
+              <li key={s.place.id} className={skipped.has(s.place.id) ? 'skipped' : ''}>
+                <label className="include" aria-label={`Include ${s.place.name}`}>
+                  <input type="checkbox" checked={!skipped.has(s.place.id)} onChange={() => toggleStop(s.place.id)} />
+                </label>
                 <div className="grow">
                   <div className="name">{s.place.name}</div>
                   <div className="muted small">
@@ -154,6 +173,27 @@ export function TripPlanner({ places, trips, onTripsChanged }: {
               </li>
             ))}
           </ol>
+
+          <div className="trip-go stack">
+            {legs.length === 1 ? (
+              <a className="btn primary wide big" href={legs[0].url} target="_blank" rel="noreferrer">
+                Open trip in Maps{chosen.length ? ` (${chosen.length} stop${chosen.length > 1 ? 's' : ''})` : ''}
+              </a>
+            ) : (
+              <>
+                <p className="muted small">Maps links hold a few stops each, so this trip opens in {legs.length} parts:</p>
+                {legs.map((l, i) => (
+                  <a key={i} className="btn primary wide" href={l.url} target="_blank" rel="noreferrer">Part {i + 1}: {l.label}</a>
+                ))}
+              </>
+            )}
+            {chosen.some((s) => s.place.approximate) && (
+              <p className="muted small">
+                Stops marked approximate are routed to where you saved them, not the place itself. Tap the stop's Find
+                button, or fix its pin under My places.
+              </p>
+            )}
+          </div>
           <p className="muted small">“Off route” is straight-line distance; the actual side trip by road will be a bit longer.</p>
         </section>
       )}
