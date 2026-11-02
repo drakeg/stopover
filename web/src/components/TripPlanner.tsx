@@ -41,12 +41,12 @@ function Endpoint({ label, value, onChange, allowHere }: {
   )
 }
 
-export function TripPlanner({ places, trips, onTripsChanged }: {
-  places: Place[]; trips: Trip[]; onTripsChanged: () => void
+export function TripPlanner({ places, trips, onTripsChanged, defaultDetour = 25, mapsFirst = 'google' }: {
+  places: Place[]; trips: Trip[]; onTripsChanged: () => void; defaultDetour?: number; mapsFirst?: MapsApp
 }) {
   const [start, setStart] = useState<Located | null>(null)
   const [end, setEnd] = useState<Located | null>(null)
-  const [detour, setDetour] = useState(25)
+  const [detour, setDetour] = useState(defaultDetour)
   const [route, setRoute] = useState<Route | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -176,18 +176,18 @@ export function TripPlanner({ places, trips, onTripsChanged }: {
 
           <div className="trip-go stack">
             <strong>Open this trip in{chosen.length ? ` (${chosen.length} stop${chosen.length > 1 ? 's' : ''})` : ''}:</strong>
-            {(['google', 'apple'] as MapsApp[]).map((app) => {
+            {(mapsFirst === 'apple' ? ['apple', 'google'] as MapsApp[] : ['google', 'apple'] as MapsApp[]).map((app) => {
               const legs = legsFor(app)
               const appName = app === 'apple' ? 'Apple Maps' : 'Google Maps'
               return legs.length === 1 ? (
-                <a key={app} className={`btn wide big ${app === 'google' ? 'primary' : ''}`} href={legs[0].url} target="_blank" rel="noreferrer">
+                <a key={app} className={`btn wide big ${app === mapsFirst ? 'primary' : ''}`} href={legs[0].url} target="_blank" rel="noreferrer">
                   {appName}
                 </a>
               ) : (
                 <div key={app} className="stack">
                   <span className="muted small">{appName} (in {legs.length} parts):</span>
                   {legs.map((l, i) => (
-                    <a key={i} className={`btn wide ${app === 'google' ? 'primary' : ''}`} href={l.url} target="_blank" rel="noreferrer">
+                    <a key={i} className={`btn wide ${app === mapsFirst ? 'primary' : ''}`} href={l.url} target="_blank" rel="noreferrer">
                       Part {i + 1}: {l.label}
                     </a>
                   ))}

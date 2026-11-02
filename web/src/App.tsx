@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { supabase, type NewPlace, type Place, type PlacePatch, type Trip } from './lib/supabase'
+import { DEFAULT_PROFILE, loadProfile, supabase, type NewPlace, type Place, type PlacePatch, type Profile, type Trip } from './lib/supabase'
 import { reverseGeocode } from './lib/geo'
-import { Auth } from './components/Auth'
+import { Auth, SetNewPassword } from './components/Auth'
+import { Account } from './components/Account'
 import { AddPlace } from './components/AddPlace'
 import { EditPlace } from './components/EditPlace'
 import { PlacesList } from './components/PlacesList'
@@ -18,12 +19,32 @@ export default function App() {
   const [places, setPlaces] = useState<Place[]>([])
   const [trips, setTrips] = useState<Trip[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [recovering, setRecovering] = useState(false)
+  const [showAccount, setShowAccount] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
+      setSession(s)
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true)
+      if (event === 'SIGNED_OUT') { setPlaces([]); setTrips([]); setProfile(null); setShowAccount(false) }
+    })
     return () => data.subscription.unsubscribe()
   }, [])
+
+  // Clean auth tokens/codes out of the address bar after following an email link.
+  useEffect(() => {
+    if (session && /access_token|type=|code=|error_description/.test(window.location.hash + window.location.search)) {
+      history.replaceState(null, '', window.location.pathname)
+    }
+  }, [session])
+
+  useEffect(() => {
+    if (!session) return
+    loadProfile(session.user).then(setProfile).catch(() => setProfile({ id: session.user.id, ...DEFAULT_PROFILE }))
+  }, [session])
 
   const loadPlaces = useCallback(async () => {
     const { data, error } = await supabase.from('places').select('*').order('created_at', { ascending: false })
@@ -76,23 +97,31 @@ export default function App() {
   }
 
   if (session === undefined) return <div className="splash" />
+  if (recovering && session)
+    return <SetNewPassword onDone={() => { setRecovering(false); setToast('Password updated — you’re signed in.') }} />
   if (!session) return <Auth />
 
   return (
     <div className="app">
       <header className="top">
         <div className="brand"><span className="sign">STOP</span>over</div>
-        <button className="btn link small" onClick={() => supabase.auth.signOut()}>Sign out</button>
+        <button className="btn link small account-btn" onClick={() => setShowAccount(true)} aria-label="Account">
+          {profile?.display_name?.split(' ')[0] || 'Account'} ⚙︎
+        </button>
       </header>
 
       <nav className="tabs">
-        <button className={tab === 'places' ? 'on' : ''} onClick={() => setTab('places')}>My places</button>
-        <button className={tab === 'trip' ? 'on' : ''} onClick={() => setTab('trip')}>Plan a trip</button>
+        <button className={tab === 'places' && !showAccount ? 'on' : ''} onClick={() => { setTab('places'); setShowAccount(false) }}>My places</button>
+        <button className={tab === 'trip' && !showAccount ? 'on' : ''} onClick={() => { setTab('trip'); setShowAccount(false) }}>Plan a trip</button>
       </nav>
 
       <main className="content">
+        {toast && <p className="ok banner-ok" onClick={() => setToast(null)}>{toast}</p>}
         {err && <p className="error banner" onClick={() => setErr(null)}>{err}</p>}
-        {tab === 'places' && (
+        {showAccount && profile && (
+          <Account user={session.user} profile={profile} places={places} onProfile={setProfile} onClose={() => setShowAccount(false)} />
+        )}
+        {!showAccount && tab === 'places' && (
           adding
             ? <AddPlace onSave={addPlace} onCancel={() => setAdding(false)} />
             : editing
@@ -102,7 +131,16 @@ export default function App() {
                 <PlacesList places={places} onEdit={setEditing} onToggleVisited={toggleVisited} onDelete={deletePlace} />
               </>
         )}
-        {tab === 'trip' && <TripPlanner places={places} trips={trips} onTripsChanged={loadTrips} />}
+        {!showAccount && tab === 'trip' && (
+          <TripPlanner
+            key={profile?.default_detour_mi}
+            places={places}
+            trips={trips}
+            onTripsChanged={loadTrips}
+            defaultDetour={profile?.default_detour_mi ?? 25}
+            mapsFirst={profile?.maps_app ?? 'google'}
+          />
+        )}
       </main>
       <footer className="build muted small">Version {__BUILD__}</footer>
     </div>

@@ -54,3 +54,35 @@ export const CATEGORIES = [
   'Campground',
   'Other',
 ] as const
+
+/** The address of this app (works at a domain root or in a GitHub Pages subfolder). */
+export const appUrl = () => window.location.origin + window.location.pathname
+
+// ---------- Profile & preferences ----------
+export type MapsPref = 'google' | 'apple'
+
+export type Profile = {
+  id: string
+  display_name: string | null
+  default_detour_mi: number
+  maps_app: MapsPref
+}
+
+export const DEFAULT_PROFILE = { display_name: null, default_detour_mi: 25, maps_app: 'google' as MapsPref }
+
+/** Loads the signed-in user's profile, creating it on first use. */
+export async function loadProfile(user: { id: string; user_metadata?: Record<string, unknown> }): Promise<Profile> {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+  if (error) throw error
+  if (data) return data as Profile
+  const fromSignup = typeof user.user_metadata?.display_name === 'string' ? user.user_metadata.display_name : null
+  const fresh = { id: user.id, ...DEFAULT_PROFILE, display_name: fromSignup }
+  const ins = await supabase.from('profiles').insert(fresh).select().single()
+  return (ins.data as Profile) ?? fresh
+}
+
+export async function saveProfile(id: string, patch: Partial<Omit<Profile, 'id'>>): Promise<Profile> {
+  const { data, error } = await supabase.from('profiles').upsert({ id, ...patch }).select().single()
+  if (error) throw error
+  return data as Profile
+}

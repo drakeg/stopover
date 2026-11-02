@@ -122,3 +122,11 @@ a.btn { color: var(--green-2); }
 .include { display: flex; align-items: center; }
 .include input { width: 1.3rem; height: 1.3rem; accent-color: var(--green); }
 .trip-go { margin-top: 1rem; }
+
+.account-btn { max-width: 45vw; overflow: hidden; text-overflow: ellipsis; }
+.label-row { display: flex; justify-content: space-between; align-items: baseline; }
+.field { display: grid; gap: .4rem; }
+.field-label { font-weight: 500; font-size: .92rem; }
+.banner-ok { background: #e8f1ea; padding: .6rem .8rem; border-radius: 10px; cursor: pointer; margin: 0; }
+.danger-zone { border-color: #fecaca; }
+.btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; }

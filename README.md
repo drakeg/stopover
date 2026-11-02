@@ -69,6 +69,24 @@ Until then, the website can be installed on a phone from Safari/Chrome → *Add 
 
 All three live in `web/src/lib/geo.ts` and `MapView.tsx`. Before opening the app to the public, move to a provider with an API key (Mapbox, MapTiler, Stadia Maps, OpenRouteService), ideally called through a Supabase Edge Function so the key isn't in the app.
 
+## Accounts
+
+- Sign up (optional name), sign in, **forgot password** → email link → choose a new password
+- **Account page** (gear button, top right): name, change email (confirmed by email), change password,
+  usual detour distance and preferred maps app, export places as **GPX** (Garmin/GPS apps) or **CSV**, sign out,
+  and **delete account** (removes places, trips and profile; required for App Store / Play Store listing)
+
+## Before opening it to the public
+
+1. **Email sending.** Supabase's built-in email is for testing and only sends a handful of emails per hour.
+   Set up custom SMTP (Resend, Postmark, Amazon SES…) under **Authentication → Emails → SMTP Settings**,
+   and brand the templates (confirm signup, reset password, change email) on the same page.
+2. **Redirect URLs.** **Authentication → URL Configuration**: Site URL `https://drakeg.github.io/stopover/`
+   and Redirect URL `https://drakeg.github.io/stopover/**` (needed for confirm, reset and email-change links).
+3. **Leaked-password protection.** **Authentication → Sign In / Providers → Email** (may require a paid plan).
+4. **Privacy policy and terms.** Needed for the app stores and good practice; the app stores locations people save.
+5. **Map services.** Move off the free OpenStreetMap search/routing servers (see Map services above).
+
 ## Ideas for later
 
 - RV-aware routing (height/weight/propane restrictions)
