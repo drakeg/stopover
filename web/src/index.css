@@ -104,3 +104,14 @@ a.btn { color: var(--green-2); }
 .tagline { text-align: center; color: var(--muted); margin: .5rem 0 1.5rem; }
 .splash { min-height: 100dvh; background: var(--green); }
 .leaflet-popup-content { font: 14px/1.35 Inter, system-ui, sans-serif; }
+
+.big-input { font-size: 1.15rem; padding: .85rem; }
+.btn.big { font-size: 1.15rem; padding: 1rem; }
+.row.spread { justify-content: space-between; }
+.gps { margin: 0; font-size: .9rem; padding: .55rem .7rem; border-radius: 8px; background: var(--paper); color: var(--muted); }
+.gps.ok { background: #e8f1ea; color: var(--green); }
+.gps.error { background: #fee2e2; color: var(--danger); }
+.place-main { border: 0; background: none; text-align: left; padding: 0; cursor: pointer; color: inherit; }
+.tag { display: inline-block; margin-left: .4rem; font-size: .7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .04em; background: #fef3c7; color: #92400e; border-radius: 4px; padding: .05rem .35rem; vertical-align: middle; }
+.build { text-align: center; padding: 1rem 0 1.5rem; opacity: .7; }

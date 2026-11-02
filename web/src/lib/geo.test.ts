@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { mergeResults, parseCoordinates, stopsAlongRoute } from './geo'
+import { directionsUrl, mergeResults, parseCoordinates, stopsAlongRoute } from './geo'
 import type { Place } from './supabase'
 
 const place = (name: string, lat: number, lng: number, visited = false): Place => ({
   id: name, user_id: 'u', name, lat, lng, visited,
-  notes: null, category: null, address: null, url: null, visited_at: null, created_at: '',
+  notes: null, category: null, address: null, url: null, near: null, approximate: false, visited_at: null, created_at: '',
 })
 
 // Rough I-40 line: Nashville -> Knoxville
@@ -64,5 +64,25 @@ describe('mergeResults', () => {
     const a = [{ lat: 36.0, lng: -84.0, label: 'A' }]
     const b = [{ lat: 36.0005, lng: -84.0005, label: 'A dup' }, { lat: 35, lng: -85, label: 'B' }]
     expect(mergeResults(a, b).map((r) => r.label)).toEqual(['A', 'B'])
+  })
+})
+
+describe('directionsUrl', () => {
+  const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'
+  const android = 'Mozilla/5.0 (Linux; Android 15)'
+  const exact = { lat: 36.01, lng: -84.27, name: 'K-25 Overlook' }
+  const rough = { ...exact, name: 'Manhattan Project Historic Site', approximate: true,
+    address: 'Interstate 40, Kingston, Roane County, Tennessee, 37763, United States' }
+
+  it('gives directions to exact pins', () => {
+    expect(directionsUrl(exact, iphone)).toContain('maps.apple.com/?daddr=36.01,-84.27')
+    expect(directionsUrl(exact, android)).toContain('google.com/maps/dir/?api=1&destination=36.01,-84.27')
+  })
+
+  it('searches by name near approximate pins', () => {
+    expect(directionsUrl(rough, iphone)).toBe(
+      'https://maps.apple.com/?q=Manhattan%20Project%20Historic%20Site&sll=36.01,-84.27&z=11')
+    expect(decodeURIComponent(directionsUrl(rough, android))).toContain(
+      'query=Manhattan Project Historic Site near Roane County, Tennessee')
   })
 })

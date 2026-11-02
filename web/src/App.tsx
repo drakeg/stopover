@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { supabase, type NewPlace, type Place, type Trip } from './lib/supabase'
+import { supabase, type NewPlace, type Place, type PlacePatch, type Trip } from './lib/supabase'
+import { reverseGeocode } from './lib/geo'
 import { Auth } from './components/Auth'
 import { AddPlace } from './components/AddPlace'
+import { EditPlace } from './components/EditPlace'
 import { PlacesList } from './components/PlacesList'
 import { TripPlanner } from './components/TripPlanner'
 
@@ -12,6 +14,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [tab, setTab] = useState<Tab>('places')
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState<Place | null>(null)
   const [places, setPlaces] = useState<Place[]>([])
   const [trips, setTrips] = useState<Trip[]>([])
   const [err, setErr] = useState<string | null>(null)
@@ -39,10 +42,21 @@ export default function App() {
   }, [session, loadPlaces, loadTrips])
 
   async function addPlace(p: NewPlace) {
-    const { error } = await supabase.from('places').insert(p)
+    const { data, error } = await supabase.from('places').insert(p).select().single()
     if (error) throw error
     setAdding(false)
-    await loadPlaces()
+    setPlaces((ps) => [data as Place, ...ps])
+    // Quick adds skip the address lookup so saving is instant; fill it in afterwards.
+    if (!p.address) {
+      reverseGeocode(p).then((r) => r && updatePlace(data as Place, { address: r.address }, false)).catch(() => {})
+    }
+  }
+
+  async function updatePlace(p: Place, patch: PlacePatch, close = true) {
+    const { data, error } = await supabase.from('places').update(patch).eq('id', p.id).select().single()
+    if (error) throw error
+    setPlaces((ps) => ps.map((x) => (x.id === p.id ? (data as Place) : x)))
+    if (close) setEditing(null)
   }
 
   async function toggleVisited(p: Place) {
@@ -81,13 +95,16 @@ export default function App() {
         {tab === 'places' && (
           adding
             ? <AddPlace onSave={addPlace} onCancel={() => setAdding(false)} />
+            : editing
+            ? <EditPlace place={editing} onSave={(patch) => updatePlace(editing, patch)} onCancel={() => setEditing(null)} />
             : <>
                 <button className="btn primary wide add" onClick={() => setAdding(true)}>＋ Add a place</button>
-                <PlacesList places={places} onToggleVisited={toggleVisited} onDelete={deletePlace} />
+                <PlacesList places={places} onEdit={setEditing} onToggleVisited={toggleVisited} onDelete={deletePlace} />
               </>
         )}
         {tab === 'trip' && <TripPlanner places={places} trips={trips} onTripsChanged={loadTrips} />}
       </main>
+      <footer className="build muted small">Version {__BUILD__}</footer>
     </div>
   )
 }

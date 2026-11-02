@@ -145,11 +145,12 @@ export function TripPlanner({ places, trips, onTripsChanged }: {
                   <div className="name">{s.place.name}</div>
                   <div className="muted small">
                     Mile {formatMiles(s.milesFromStart)} · about {formatMiles(s.offRouteMi)} mi off route
+                    {s.place.near ? ` · ${s.place.near}` : ''}
                     {s.place.category ? ` · ${s.place.category}` : ''}
                   </div>
                   {s.place.notes && <div className="notes">{s.place.notes}</div>}
                 </div>
-                <a className="btn small" href={directionsUrl(s.place, s.place.name)} target="_blank" rel="noreferrer">Go</a>
+                <a className="btn small" href={directionsUrl(s.place)} target="_blank" rel="noreferrer">{s.place.approximate ? 'Find' : 'Go'}</a>
               </li>
             ))}
           </ol>

@@ -19,13 +19,17 @@ export type Place = {
   lat: number
   lng: number
   url: string | null
+  near: string | null
+  approximate: boolean
   visited: boolean
   visited_at: string | null
   created_at: string
 }
 
 export type NewPlace = Pick<Place, 'name' | 'lat' | 'lng'> &
-  Partial<Pick<Place, 'notes' | 'category' | 'address' | 'url'>>
+  Partial<Pick<Place, 'notes' | 'category' | 'address' | 'url' | 'near' | 'approximate'>>
+
+export type PlacePatch = Partial<Omit<Place, 'id' | 'user_id' | 'created_at'>>
 
 export type Trip = {
   id: string

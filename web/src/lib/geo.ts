@@ -163,11 +163,27 @@ export function stopsAlongRoute(
 }
 
 // ---------- Hand-off to navigation apps ----------
-export function directionsUrl(to: LatLng, label?: string): string {
-  const isApple = /iPhone|iPad|Macintosh/.test(navigator.userAgent)
-  return isApple
-    ? `https://maps.apple.com/?daddr=${to.lat},${to.lng}${label ? `&q=${encodeURIComponent(label)}` : ''}`
-    : `https://www.google.com/maps/dir/?api=1&destination=${to.lat},${to.lng}`
+type Navigable = LatLng & { name: string; approximate?: boolean; near?: string | null; address?: string | null }
+
+/**
+ * Link that opens Apple Maps (Apple devices) or Google Maps.
+ * Exact pins get turn-by-turn directions. Approximate pins (saved from the road)
+ * mark where you were, not the place, so instead we let the maps app search for
+ * the name near that spot — its search knows places by their signage names.
+ */
+export function directionsUrl(place: Navigable, userAgent = navigator.userAgent): string {
+  const isApple = /iPhone|iPad|Macintosh/.test(userAgent)
+  const { lat, lng, name } = place
+  if (!place.approximate) {
+    return isApple
+      ? `https://maps.apple.com/?daddr=${lat},${lng}&q=${encodeURIComponent(name)}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+  }
+  if (isApple) return `https://maps.apple.com/?q=${encodeURIComponent(name)}&sll=${lat},${lng}&z=11`
+  // Google's link format has no "near" parameter, so add the town/county to the query
+  const area = place.address?.split(',').slice(-4, -2).join(',').trim()
+  const q = [name, area ? `near ${area}` : `near ${lat.toFixed(3)},${lng.toFixed(3)}`].join(' ')
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
 }
 
 export function formatMiles(mi: number): string {
