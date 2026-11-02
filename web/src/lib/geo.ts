@@ -191,29 +191,39 @@ export function directionsUrl(place: Navigable, userAgent = navigator.userAgent)
 }
 
 export type TripLeg = { label: string; url: string }
+export type MapsApp = 'apple' | 'google'
 
-/** Stops per maps link. Google's documented limit in mobile browsers is 3 waypoints. */
-export const STOPS_PER_LEG = 3
+const isPhone = (ua: string) => /iPhone|iPad|Android|Mobile/.test(ua)
 
 /**
- * Turn-by-turn links for start → chosen stops → end, in Apple or Google Maps.
+ * Stops per link. Google documents 9 waypoints (3 in mobile browsers). Apple's
+ * multi-stop limit isn't documented, so we keep its legs short.
+ */
+export function stopsPerLeg(app: MapsApp, userAgent = navigator.userAgent): number {
+  if (app === 'google') return isPhone(userAgent) ? 3 : 9
+  return 3
+}
+
+/**
+ * Turn-by-turn links for start → chosen stops → end in Apple or Google Maps.
  * Long trips are split into legs (each leg starts where the last one ended).
  */
 export function tripLinks(
   start: LatLng,
   stops: (LatLng & { name: string })[],
   end: LatLng,
+  app: MapsApp,
   userAgent = navigator.userAgent,
 ): TripLeg[] {
-  const apple = isAppleDevice(userAgent)
+  const per = stopsPerLeg(app, userAgent)
   const points: (LatLng & { name: string })[] = [{ ...start, name: 'Start' }, ...stops, { ...end, name: 'Destination' }]
   const legs: TripLeg[] = []
-  for (let i = 0; i < points.length - 1; i += STOPS_PER_LEG + 1) {
-    const leg = points.slice(i, i + STOPS_PER_LEG + 2)
+  for (let i = 0; i < points.length - 1; i += per + 1) {
+    const leg = points.slice(i, i + per + 2)
     const from = leg[0]
     const to = leg[leg.length - 1]
     const via = leg.slice(1, -1)
-    const url = apple
+    const url = app === 'apple'
       ? `https://maps.apple.com/directions?source=${ll(from)}&destination=${ll(to)}` +
         via.map((v) => `&waypoint=${ll(v)}`).join('') + '&mode=driving'
       : `https://www.google.com/maps/dir/?api=1&origin=${ll(from)}&destination=${ll(to)}` +

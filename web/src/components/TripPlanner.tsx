@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   directionsUrl, formatDuration, formatMiles, getRoute, reverseGeocode, stopsAlongRoute, tripLinks,
-  type Located, type Route,
+  type Located, type MapsApp, type Route,
 } from '../lib/geo'
 import { getCurrentLocation } from '../lib/location'
 import { supabase, type Place, type Trip } from '../lib/supabase'
@@ -57,8 +57,8 @@ export function TripPlanner({ places, trips, onTripsChanged }: {
     [route, places, detour],
   )
   const chosen = stops.filter((s) => !skipped.has(s.place.id))
-  const legs = start && end && route
-    ? tripLinks(start, chosen.map((s) => ({ lat: s.place.lat, lng: s.place.lng, name: s.place.name })), end)
+  const legsFor = (app: MapsApp) => start && end && route
+    ? tripLinks(start, chosen.map((s) => ({ lat: s.place.lat, lng: s.place.lng, name: s.place.name })), end, app)
     : []
   const toggleStop = (id: string) =>
     setSkipped((prev) => {
@@ -175,18 +175,25 @@ export function TripPlanner({ places, trips, onTripsChanged }: {
           </ol>
 
           <div className="trip-go stack">
-            {legs.length === 1 ? (
-              <a className="btn primary wide big" href={legs[0].url} target="_blank" rel="noreferrer">
-                Open trip in Maps{chosen.length ? ` (${chosen.length} stop${chosen.length > 1 ? 's' : ''})` : ''}
-              </a>
-            ) : (
-              <>
-                <p className="muted small">Maps links hold a few stops each, so this trip opens in {legs.length} parts:</p>
-                {legs.map((l, i) => (
-                  <a key={i} className="btn primary wide" href={l.url} target="_blank" rel="noreferrer">Part {i + 1}: {l.label}</a>
-                ))}
-              </>
-            )}
+            <strong>Open this trip in{chosen.length ? ` (${chosen.length} stop${chosen.length > 1 ? 's' : ''})` : ''}:</strong>
+            {(['google', 'apple'] as MapsApp[]).map((app) => {
+              const legs = legsFor(app)
+              const appName = app === 'apple' ? 'Apple Maps' : 'Google Maps'
+              return legs.length === 1 ? (
+                <a key={app} className={`btn wide big ${app === 'google' ? 'primary' : ''}`} href={legs[0].url} target="_blank" rel="noreferrer">
+                  {appName}
+                </a>
+              ) : (
+                <div key={app} className="stack">
+                  <span className="muted small">{appName} (in {legs.length} parts):</span>
+                  {legs.map((l, i) => (
+                    <a key={i} className={`btn wide ${app === 'google' ? 'primary' : ''}`} href={l.url} target="_blank" rel="noreferrer">
+                      Part {i + 1}: {l.label}
+                    </a>
+                  ))}
+                </div>
+              )
+            })}
             {chosen.some((s) => s.place.approximate) && (
               <p className="muted small">
                 Stops marked approximate are routed to where you saved them, not the place itself. Tap the stop's Find

@@ -95,23 +95,28 @@ describe('tripLinks', () => {
   const stop = (n: number) => ({ lat: 36 + n / 100, lng: -85 - n / 100, name: `Stop ${n}` })
 
   it('puts start, stops and destination in one Apple Maps link', () => {
-    const [leg] = tripLinks(nash, [stop(1), stop(2)], knox, iphone)
+    const [leg] = tripLinks(nash, [stop(1), stop(2)], knox, 'apple', iphone)
     expect(leg.url).toBe('https://maps.apple.com/directions?source=36.16,-86.78&destination=35.96,-83.92' +
       '&waypoint=36.01,-85.01&waypoint=36.02,-85.02&mode=driving')
   })
 
   it('builds the Google Maps equivalent', () => {
-    const [leg] = tripLinks(nash, [stop(1), stop(2)], knox, android)
+    const [leg] = tripLinks(nash, [stop(1), stop(2)], knox, 'google', android)
     expect(leg.url).toBe('https://www.google.com/maps/dir/?api=1&origin=36.16,-86.78&destination=35.96,-83.92' +
       '&waypoints=36.01,-85.01%7C36.02,-85.02&travelmode=driving')
   })
 
   it('works with no stops', () => {
-    expect(tripLinks(nash, [], knox, android)).toHaveLength(1)
+    expect(tripLinks(nash, [], knox, 'google', android)).toHaveLength(1)
+  })
+
+  it('keeps up to 9 stops in one Google link on a computer', () => {
+    const mac = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_5) AppleWebKit/605.1.15 Version/18.5 Safari/605.1.15'
+    expect(tripLinks(nash, [1, 2, 3, 4, 5].map(stop), knox, 'google', mac)).toHaveLength(1)
   })
 
   it('splits long trips into legs that join up', () => {
-    const legs = tripLinks(nash, [1, 2, 3, 4, 5].map(stop), knox, android)
+    const legs = tripLinks(nash, [1, 2, 3, 4, 5].map(stop), knox, 'google', android)
     expect(legs.map((l) => l.label)).toEqual(['Start → Stop 4', 'Stop 4 → Destination'])
     expect(legs[0].url).toContain('waypoints=36.01,-85.01%7C36.02,-85.02%7C36.03,-85.03')
     expect(legs[1].url).toContain('origin=36.04,-85.04&destination=35.96,-83.92&waypoints=36.05,-85.05&')
