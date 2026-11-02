@@ -1,0 +1,10 @@
+{
+  "name": "Stopover",
+  "short_name": "Stopover",
+  "description": "Save places you pass and find them again on future trips.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5efe1",
+  "theme_color": "#14532d",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
