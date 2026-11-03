@@ -10,7 +10,7 @@ import { MapView, type MapPin } from './MapView'
 
 const DETOURS = [5, 10, 25, 50, 100]
 
-function Endpoint({ label, value, onChange, allowHere }: {
+export function Endpoint({ label, value, onChange, allowHere }: {
   label: string; value: Located | null; onChange: (l: Located) => void; allowHere?: boolean
 }) {
   const [busy, setBusy] = useState(false)

@@ -145,3 +145,17 @@ a.btn { color: var(--green-2); }
 .saved-date { white-space: nowrap; text-align: right; }
 .tag.been { background: #e8f1ea; color: var(--green); }
 @media (max-width: 420px) { .saved-row { flex-direction: column; align-items: flex-start; gap: .2rem; } .saved-date { text-align: left; } }
+
+.suggest { display: grid; gap: .35rem; margin-top: -.35rem; }
+.suggest-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+.suggest-list li + li { border-top: 1px solid var(--line); }
+.suggest-list button { width: 100%; text-align: left; border: 0; background: none; padding: .6rem .75rem; display: grid; gap: .1rem; cursor: pointer; color: inherit; }
+.suggest-list button:active, .suggest-list button:hover { background: var(--paper); }
+.picked { display: flex; justify-content: space-between; align-items: center; gap: .5rem; background: #e8f1ea; color: var(--green);
+  border-radius: 8px; padding: .55rem .7rem; font-size: .9rem; margin-top: -.35rem; }
+
+.select-hint { margin: -.25rem 0 0; }
+.places.selecting li { cursor: pointer; }
+.places li.chosen-row { border-color: var(--green-2); background: #f1f7f2; }
+.select-bar { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 8px); display: flex; gap: .5rem; padding: .6rem;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / .12); z-index: 5; }

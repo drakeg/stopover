@@ -125,7 +125,7 @@ export async function reverseGeocode(p: LatLng): Promise<({ name: string; addres
 
 // ---------- Routing (OSRM) ----------
 // The public demo server is fine for personal use; see README for production options.
-const OSRM = 'https://router.project-osrm.org'
+export const OSRM = 'https://router.project-osrm.org'
 
 export type Route = {
   coords: [number, number][] // [lng, lat] pairs, GeoJSON order
@@ -134,7 +134,13 @@ export type Route = {
 }
 
 export async function getRoute(from: LatLng, to: LatLng): Promise<Route> {
-  const url = `${OSRM}/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`
+  return getRouteVia([from, to])
+}
+
+/** Driving route through the points in the given order. */
+export async function getRouteVia(points: LatLng[]): Promise<Route> {
+  const coords = points.map((p) => `${p.lng},${p.lat}`).join(';')
+  const url = `${OSRM}/route/v1/driving/${coords}?overview=full&geometries=geojson`
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Routing failed (${res.status})`)
   const data = await res.json()
@@ -227,12 +233,12 @@ export function stopsPerLeg(app: MapsApp, userAgent = navigator.userAgent): numb
 export function tripLinks(
   start: LatLng,
   stops: (LatLng & { name: string })[],
-  end: LatLng,
+  end: LatLng & { name?: string },
   app: MapsApp,
   userAgent = navigator.userAgent,
 ): TripLeg[] {
   const per = stopsPerLeg(app, userAgent)
-  const points: (LatLng & { name: string })[] = [{ ...start, name: 'Start' }, ...stops, { ...end, name: 'Destination' }]
+  const points: (LatLng & { name: string })[] = [{ ...start, name: 'Start' }, ...stops, { ...end, name: end.name ?? 'Destination' }]
   const legs: TripLeg[] = []
   for (let i = 0; i < points.length - 1; i += per + 1) {
     const leg = points.slice(i, i + per + 2)

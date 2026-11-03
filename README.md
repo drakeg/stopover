@@ -65,9 +65,25 @@ Until then, the website can be installed on a phone from Safari/Chrome → *Add 
 |---|---|---|
 | Map tiles | OpenStreetMap | Free; fine for personal use |
 | Search / address lookup | OSM Nominatim | Free, ~1 request/sec, so search runs on button press |
-| Driving routes | OSRM public demo server | Free, best-effort, no uptime guarantee |
+| Driving routes and drive-time matrix | OSRM public demo server | Free, best-effort, no uptime guarantee |
+| "What's nearby" suggestions | OSM Overpass API (overpass-api.de, kumi.systems fallback) | Free; ~10,000 requests/day guidance; not meant as a public app's backend |
 
 All three live in `web/src/lib/geo.ts` and `MapView.tsx`. Before opening the app to the public, move to a provider with an API key (Mapbox, MapTiler, Stadia Maps, OpenRouteService), ideally called through a Supabase Edge Function so the key isn't in the app.
+
+## Adding places on the road
+
+Quick add grabs GPS the moment it opens and saves right there. In the background it looks up attractions,
+historic sites, parks, viewpoints, waterfalls, caves and campgrounds within 25 miles, ranked closest first,
+Wikipedia-notable places higher, and **ahead of you** above behind (using the phone's direction of travel when moving).
+Typing the sign narrows the list; if nothing nearby matches, it searches any named place within 50 miles.
+Tapping a suggestion saves its exact spot and type instead of the road.
+
+## Routing several places
+
+In My places, **Route several…** → tick places → choose a start (defaults to current location) and an ending
+(last stop, back to start, or somewhere else). The best order comes from real drive times (OSRM table), solved
+exactly for up to 12 stops and by nearest-neighbour + 2-opt above that; it falls back to straight-line distance if
+the drive-time server is down. Opens in Google or Apple Maps, split into parts if the trip has more stops than one link holds.
 
 ## Accounts
 
@@ -89,7 +105,8 @@ All three live in `web/src/lib/geo.ts` and `MapView.tsx`. Before opening the app
    and Redirect URL `https://drakeg.github.io/stopover/**` (needed for confirm, reset and email-change links).
 3. **Leaked-password protection.** **Authentication → Sign In / Providers → Email** (may require a paid plan).
 4. **Privacy policy and terms.** Needed for the app stores and good practice; the app stores locations people save.
-5. **Map services.** Move off the free OpenStreetMap search/routing servers (see Map services above).
+5. **Map services.** Move off the free OpenStreetMap search/routing/Overpass servers (see Map services above).
+   Overpass asks that public apps run their own instance or use a paid places API (Google Places Nearby, Mapbox, Foursquare).
 
 ## Ideas for later
 

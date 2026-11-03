@@ -2,16 +2,26 @@ import { Capacitor } from '@capacitor/core'
 import { Geolocation } from '@capacitor/geolocation'
 import type { LatLng } from './geo'
 
+/** A position plus direction of travel when the device is moving (degrees from north, m/s). */
+export type Fix = LatLng & { heading: number | null; speed: number | null }
+
+const toFix = (c: { latitude: number; longitude: number; heading?: number | null; speed?: number | null }): Fix => ({
+  lat: c.latitude,
+  lng: c.longitude,
+  heading: typeof c.heading === 'number' && Number.isFinite(c.heading) ? c.heading : null,
+  speed: typeof c.speed === 'number' && Number.isFinite(c.speed) ? c.speed : null,
+})
+
 /**
  * Current position — native GPS in the phone apps, browser geolocation on the web.
  * On the web we ask for a precise fix first, then fall back to a quicker, coarser
  * one (Wi-Fi / cell / a recent fix), which is what Macs and indoor phones can give.
  */
-export async function getCurrentLocation(): Promise<LatLng> {
+export async function getCurrentLocation(): Promise<Fix> {
   if (Capacitor.isNativePlatform()) {
     try {
       const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 })
-      return { lat: pos.coords.latitude, lng: pos.coords.longitude }
+      return toFix(pos.coords)
     } catch (e) {
       throw new Error(friendly(e))
     }
@@ -32,10 +42,10 @@ export async function getCurrentLocation(): Promise<LatLng> {
   }
 }
 
-function browserFix(opts: PositionOptions): Promise<LatLng> {
+function browserFix(opts: PositionOptions): Promise<Fix> {
   return new Promise((resolve, reject) =>
     navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      (p) => resolve(toFix(p.coords)),
       reject,
       opts,
     ),

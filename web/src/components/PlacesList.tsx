@@ -6,15 +6,27 @@ import { MapView } from './MapView'
 export function PlacesList({
   places,
   onEdit,
+  onRoute,
   onToggleVisited,
   onDelete,
 }: {
   places: Place[]
   onEdit: (p: Place) => void
+  onRoute: (ps: Place[]) => void
   onToggleVisited: (p: Place) => void
   onDelete: (p: Place) => void
 }) {
   const [showVisited, setShowVisited] = useState(false)
+  const [selecting, setSelecting] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const stopSelecting = () => { setSelecting(false); setSelected(new Set()) }
   const shown = places.filter((p) => showVisited || !p.visited)
   const visitedCount = places.filter((p) => p.visited).length
 
@@ -37,17 +49,32 @@ export function PlacesList({
       />
       <div className="list-head">
         <span>{places.length - visitedCount} to visit</span>
-        {visitedCount > 0 && (
-          <label className="toggle">
-            <input type="checkbox" checked={showVisited} onChange={(e) => setShowVisited(e.target.checked)} />
-            Show {visitedCount} visited
-          </label>
-        )}
+        <span className="row">
+          {visitedCount > 0 && (
+            <label className="toggle">
+              <input type="checkbox" checked={showVisited} onChange={(e) => setShowVisited(e.target.checked)} />
+              Show {visitedCount} visited
+            </label>
+          )}
+          {!selecting && places.length > 1 && (
+            <button className="btn small" onClick={() => setSelecting(true)}>Route several…</button>
+          )}
+        </span>
       </div>
-      <ul className="places">
+      {selecting && <p className="muted small select-hint">Tap the places you want to visit. Stopover will work out the best order.</p>}
+      <ul className={`places ${selecting ? 'selecting' : ''}`}>
         {shown.map((p) => (
-          <li key={p.id} className={p.visited ? 'visited' : ''}>
-            <button className="grow place-main" onClick={() => onEdit(p)} aria-label={`Edit ${p.name}`}>
+          <li key={p.id} className={[p.visited ? 'visited' : '', selected.has(p.id) ? 'chosen-row' : ''].join(' ')}>
+            {selecting && (
+              <label className="include" aria-label={`Include ${p.name}`}>
+                <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
+              </label>
+            )}
+            <button
+              className="grow place-main"
+              onClick={() => (selecting ? toggle(p.id) : onEdit(p))}
+              aria-label={selecting ? `Select ${p.name}` : `Edit ${p.name}`}
+            >
               <div className="name">
                 {p.name}
                 {p.approximate && <span className="tag">approx. location</span>}
@@ -57,7 +84,7 @@ export function PlacesList({
               </div>
               {p.notes && <div className="notes">{p.notes}</div>}
             </button>
-            <div className="actions">
+            {!selecting && <div className="actions">
               <a className="btn small" href={directionsUrl(p)} target="_blank" rel="noreferrer">{p.approximate ? 'Find' : 'Go'}</a>
               <button className="btn small" onClick={() => onToggleVisited(p)}>{p.visited ? 'Undo' : 'Been'}</button>
               <button
@@ -67,10 +94,19 @@ export function PlacesList({
               >
                 ✕
               </button>
-            </div>
+            </div>}
           </li>
         ))}
       </ul>
+      {selecting && (
+        <div className="select-bar">
+          <button className="btn" onClick={stopSelecting}>Cancel</button>
+          <button className="btn primary grow" disabled={selected.size === 0}
+            onClick={() => { onRoute(places.filter((p) => selected.has(p.id))); stopSelecting() }}>
+            {selected.size ? `Plan route · ${selected.size} place${selected.size > 1 ? 's' : ''}` : 'Select places'}
+          </button>
+        </div>
+      )}
     </>
   )
 }

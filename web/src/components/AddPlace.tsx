@@ -1,34 +1,86 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { reverseGeocode, type LatLng } from '../lib/geo'
-import { getCurrentLocation } from '../lib/location'
+import { getCurrentLocation, type Fix } from '../lib/location'
+import { compass, findByName, findNearby, matchName, searchWords, type NearbyPlace } from '../lib/nearby'
 import { CATEGORIES, type NewPlace } from '../lib/supabase'
 import { LocationSearch } from './LocationSearch'
 import { MapView } from './MapView'
 
-type Gps = { status: 'locating' } | { status: 'ok'; pos: LatLng } | { status: 'error'; msg: string }
+type Gps = { status: 'locating' } | { status: 'ok'; pos: Fix } | { status: 'error'; msg: string }
+type Lookup = { status: 'idle' | 'loading' | 'error'; items: NearbyPlace[] } | { status: 'ok'; items: NearbyPlace[] }
+
+const SHOW = 5
+
+function whereLabel(p: NearbyPlace): string {
+  const d = p.distanceMi < 0.2 ? 'right here' : `${p.distanceMi < 10 ? p.distanceMi.toFixed(1) : Math.round(p.distanceMi)} mi`
+  if (d === 'right here') return d
+  return p.relative ? `${d} ${p.relative}` : `${d} ${compass(p.bearing)}`
+}
 
 /**
  * Quick add: built for a co-pilot at highway speed. Location is grabbed the
  * moment this opens (so it's where you saw the sign, not a mile later), and the
- * only thing to type is what the sign said.
+ * only thing to type is what the sign said. Nearby attractions load in the
+ * background; tapping one saves its exact spot instead of the road.
  */
 export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promise<void>; onCancel: () => void }) {
   const [precise, setPrecise] = useState(false)
   const [gps, setGps] = useState<Gps>({ status: 'locating' })
-  const gpsPromise = useRef<Promise<LatLng> | null>(null)
+  const gpsPromise = useRef<Promise<Fix> | null>(null)
   const [name, setName] = useState('')
   const [near, setNear] = useState('')
+  const [picked, setPicked] = useState<NearbyPlace | null>(null)
+  const [nearby, setNearby] = useState<Lookup>({ status: 'idle', items: [] })
+  const [byName, setByName] = useState<Lookup>({ status: 'idle', items: [] })
+  const [showAll, setShowAll] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
+    const ctrl = new AbortController()
     const p = getCurrentLocation()
     gpsPromise.current = p
     p.then(
-      (pos) => setGps({ status: 'ok', pos }),
+      (pos) => {
+        setGps({ status: 'ok', pos })
+        setNearby({ status: 'loading', items: [] })
+        findNearby(pos, ctrl.signal).then(
+          (items) => setNearby({ status: 'ok', items }),
+          (e) => { if (e?.name !== 'AbortError') setNearby({ status: 'error', items: [] }) },
+        )
+      },
       (e) => setGps({ status: 'error', msg: e instanceof Error ? e.message : String(e) }),
     )
+    return () => ctrl.abort()
   }, [])
+
+  const words = searchWords(name).join(' ')
+  const localMatches = useMemo(() => (words ? matchName(nearby.items, words) : nearby.items), [nearby.items, words])
+
+  // Nothing nearby matches what she typed? Look further out by name (debounced, one request at a time).
+  useEffect(() => {
+    if (picked || !words || gps.status !== 'ok' || nearby.status === 'loading' || localMatches.length) {
+      setByName({ status: 'idle', items: [] })
+      return
+    }
+    const ctrl = new AbortController()
+    const t = setTimeout(() => {
+      setByName({ status: 'loading', items: [] })
+      findByName(gps.pos, words, 50, ctrl.signal).then(
+        (items) => setByName({ status: 'ok', items }),
+        (e) => { if (e?.name !== 'AbortError') setByName({ status: 'error', items: [] }) },
+      )
+    }, 900)
+    return () => { clearTimeout(t); ctrl.abort() }
+  }, [words, picked, gps, nearby.status, localMatches.length])
+
+  const suggestions = localMatches.length ? localMatches : byName.items
+  const shown = suggestions.slice(0, showAll ? 12 : SHOW)
+
+  function pick(p: NearbyPlace) {
+    setPicked(p)
+    setName(p.name)
+  }
 
   async function quickSave(e: React.FormEvent) {
     e.preventDefault()
@@ -36,8 +88,15 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
     setBusy(true)
     setErr(null)
     try {
-      const pos = await gpsPromise.current!
-      await onSave({ name: name.trim(), near: near.trim() || null, lat: pos.lat, lng: pos.lng, approximate: true })
+      if (picked) {
+        await onSave({
+          name: name.trim(), near: near.trim() || null, lat: picked.lat, lng: picked.lng,
+          approximate: false, category: picked.category,
+        })
+      } else {
+        const pos = await gpsPromise.current!
+        await onSave({ name: name.trim(), near: near.trim() || null, lat: pos.lat, lng: pos.lng, approximate: true })
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not save')
       setBusy(false)
@@ -45,6 +104,8 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
   }
 
   if (precise) return <PreciseAdd initialName={name} initialNear={near} onSave={onSave} onCancel={onCancel} />
+
+  const lookingUp = nearby.status === 'loading' || byName.status === 'loading'
 
   return (
     <section className="card">
@@ -55,7 +116,7 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
           <input
             className="big-input"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); if (picked && e.target.value !== picked.name) setPicked(null) }}
             placeholder="e.g. Manhattan Project Historic Site"
             autoFocus
             required
@@ -64,19 +125,60 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
             enterKeyHint="done"
           />
         </label>
+
+        {picked ? (
+          <div className="picked">
+            <span>✓ Saving the exact spot: <strong>{picked.kind}</strong>, {whereLabel(picked)}</span>
+            <button type="button" className="btn link small" onClick={() => setPicked(null)}>Undo</button>
+          </div>
+        ) : (
+          gps.status === 'ok' && (
+            <div className="suggest" aria-live="polite">
+              <div className="suggest-head muted small">
+                {words ? 'Matches nearby' : 'Nearby — tap if it’s the one'}
+                {lookingUp && <span> · looking…</span>}
+              </div>
+              {shown.length > 0 && (
+                <ul className="suggest-list">
+                  {shown.map((p) => (
+                    <li key={p.id}>
+                      <button type="button" onClick={() => pick(p)}>
+                        <span className="name">{p.name}</span>
+                        <span className="muted small">{p.kind} · {whereLabel(p)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!lookingUp && suggestions.length > SHOW && !showAll && (
+                <button type="button" className="btn link small" onClick={() => setShowAll(true)}>Show more</button>
+              )}
+              {!lookingUp && !shown.length && (
+                <p className="muted small">
+                  {nearby.status === 'error' || byName.status === 'error'
+                    ? 'Couldn’t look up nearby places right now. Just type the name and save.'
+                    : words ? 'No match nearby — that’s fine, type the name and save.' : 'Nothing listed nearby. Type the name and save.'}
+                </p>
+              )}
+            </div>
+          )
+        )}
+
         <label>
           <span>Where? <span className="muted small">(optional)</span></span>
           <input value={near} onChange={(e) => setNear(e.target.value)} placeholder="e.g. I-40 exit 356" enterKeyHint="done" />
         </label>
 
-        <p className={`gps ${gps.status}`}>
-          {gps.status === 'locating' && '📍 Getting your location…'}
-          {gps.status === 'ok' && '📍 Location captured — saving it right where you are'}
-          {gps.status === 'error' && `⚠️ ${gps.msg}`}
-        </p>
+        {!picked && (
+          <p className={`gps ${gps.status}`}>
+            {gps.status === 'locating' && '📍 Getting your location…'}
+            {gps.status === 'ok' && '📍 Location captured — saving it right where you are'}
+            {gps.status === 'error' && `⚠️ ${gps.msg}`}
+          </p>
+        )}
 
         {err && <p className="error">{err}</p>}
-        {gps.status === 'error' ? (
+        {gps.status === 'error' && !picked ? (
           <button type="button" className="btn primary wide" onClick={() => setPrecise(true)}>Pick the spot on the map</button>
         ) : (
           <button className="btn primary wide big" disabled={busy || !name.trim()}>

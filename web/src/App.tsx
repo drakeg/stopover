@@ -8,6 +8,7 @@ import { AddPlace } from './components/AddPlace'
 import { EditPlace } from './components/EditPlace'
 import { PlacesList } from './components/PlacesList'
 import { TripPlanner } from './components/TripPlanner'
+import { RoutePlanner } from './components/RoutePlanner'
 
 type Tab = 'places' | 'trip'
 
@@ -24,6 +25,7 @@ export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [editFromAccount, setEditFromAccount] = useState(false)
+  const [routing, setRouting] = useState<Place[] | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -149,7 +151,7 @@ export default function App() {
       </header>
 
       <nav className="tabs">
-        <button className={tab === 'places' && !showAccount ? 'on' : ''} onClick={() => { setTab('places'); setShowAccount(false) }}>My places</button>
+        <button className={tab === 'places' && !showAccount ? 'on' : ''} onClick={() => { setTab('places'); setShowAccount(false); setRouting(null) }}>My places</button>
         <button className={tab === 'trip' && !showAccount ? 'on' : ''} onClick={() => { setTab('trip'); setShowAccount(false) }}>Plan a trip</button>
       </nav>
 
@@ -169,6 +171,8 @@ export default function App() {
         {!showAccount && tab === 'places' && (
           adding
             ? <AddPlace onSave={addPlace} onCancel={() => setAdding(false)} />
+            : routing
+            ? <RoutePlanner initial={routing} mapsFirst={profile?.maps_app ?? 'google'} onClose={() => setRouting(null)} />
             : editing
             ? <EditPlace place={editing} onSave={(patch) => updatePlace(editing, patch)} onCancel={() => {
                 setEditing(null)
@@ -176,7 +180,7 @@ export default function App() {
               }} />
             : <>
                 <button className="btn primary wide add" onClick={() => setAdding(true)}>＋ Add a place</button>
-                <PlacesList places={places} onEdit={setEditing} onToggleVisited={toggleVisited} onDelete={deletePlace} />
+                <PlacesList places={places} onEdit={setEditing} onRoute={setRouting} onToggleVisited={toggleVisited} onDelete={deletePlace} />
               </>
         )}
         {!showAccount && tab === 'trip' && (
