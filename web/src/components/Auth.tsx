@@ -4,7 +4,7 @@ import { appUrl, supabase } from '../lib/supabase'
 type Mode = 'in' | 'up' | 'forgot'
 export const MIN_PASSWORD = 8
 
-export function Auth() {
+export function Auth({ notice }: { notice?: string } = {}) {
   const [mode, setMode] = useState<Mode>('in')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -55,6 +55,7 @@ export function Auth() {
       </div>
       <p className="tagline">Save the places you pass. Find them again when you're headed that way.</p>
       <form onSubmit={submit} className="card stack">
+        {notice && <p className="ok banner-ok">{notice}</p>}
         <h2>{title}</h2>
         {mode === 'forgot' && <p className="muted small">Enter your account email and we'll send a link to choose a new password.</p>}
         {mode === 'up' && (

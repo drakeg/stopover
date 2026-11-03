@@ -85,6 +85,23 @@ In My places, **Route several…** → tick places → choose a start (defaults 
 exactly for up to 12 stops and by nearest-neighbour + 2-opt above that; it falls back to straight-line distance if
 the drive-time server is down. Opens in Google or Apple Maps, split into parts if the trip has more stops than one link holds.
 
+## Shared lists
+
+Places belong to a **list**. Everyone starts with "My places"; you can make more (Account → Lists).
+- **Share:** Account → Lists → *Create invite link* → send it. Links work once and expire after 7 days.
+  The person signs in (or signs up) from the link and sees who invited them before joining; they can bring
+  their own saved places along.
+- **Sync:** everyone on a list can add, edit, mark visited and remove places. Changes appear live
+  (Supabase Realtime) and again whenever the app comes back to the foreground.
+- **Owner** can rename the list, remove people and delete the list; others can leave. If the owner deletes
+  their account, a shared list passes to the longest-standing member and keeps its places.
+- The switcher at the top of My places changes lists; Edit place can move a place to another list.
+  Trip planning uses the list that's open. Saved trips are still personal.
+
+Database: `lists`, `list_members`, `list_invites` (row-level security via helpers in a non-exposed `private`
+schema); invites go through `invite_info()` / `accept_invite()`; `places.list_id` replaces per-user ownership
+(`places.user_id` now means "added by").
+
 ## Accounts
 
 - Sign up (optional name), sign in, **forgot password** → email link → choose a new password

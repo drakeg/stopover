@@ -3,21 +3,25 @@ import type { User } from '@supabase/supabase-js'
 import { appUrl, saveProfile, supabase, type MapsPref, type Place, type Profile } from '../lib/supabase'
 import { friendlyAuthError, MIN_PASSWORD } from './Auth'
 import { SavedPlaces } from './SavedPlaces'
+import { ListsCard } from './ListsCard'
+import type { List } from '../lib/lists'
 
 type Msg = { kind: 'ok' | 'error'; text: string } | null
 const Note = ({ msg }: { msg: Msg }) => (msg ? <p className={msg.kind} role="status">{msg.text}</p> : null)
 
 const DETOURS = [5, 10, 25, 50, 100]
 
-export function Account({ user, profile, places, onProfile, onClose, onEditPlace }: {
+export function Account({ user, profile, places, lists, activeListId, onSwitchList, onListsChanged, onProfile, onClose, onEditPlace }: {
   user: User; profile: Profile; places: Place[]; onProfile: (p: Profile) => void; onClose: () => void
+  lists: List[]; activeListId: string | null; onSwitchList: (id: string) => void; onListsChanged: (switchTo?: string) => Promise<void> | void
   onEditPlace: (p: Place) => void
 }) {
   return (
     <>
       <button className="btn link" onClick={onClose}>‹ Back</button>
       <ProfileCard user={user} profile={profile} onProfile={onProfile} />
-      <SavedPlaces places={places} onEdit={onEditPlace} />
+      <ListsCard userId={user.id} lists={lists} activeId={activeListId} onSwitch={onSwitchList} onChanged={onListsChanged} />
+      <SavedPlaces places={places} listName={lists.find((l) => l.id === activeListId)?.name} onEdit={onEditPlace} />
       <EmailCard user={user} />
       <PasswordCard />
       <section className="card stack">

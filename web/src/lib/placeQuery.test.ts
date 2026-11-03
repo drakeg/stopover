@@ -6,7 +6,7 @@ import type { Place } from './supabase'
 let n = 0
 const mk = (o: Partial<Place>): Place => ({
   id: String(++n), user_id: 'u', name: 'x', lat: 0, lng: 0, notes: null, category: null, address: null, url: null,
-  near: null, approximate: false, city: null, state: null, country: 'US', visited: false, visited_at: null,
+  near: null, approximate: false, list_id: 'L', city: null, state: null, country: 'US', visited: false, visited_at: null,
   created_at: `2026-11-0${n}`, ...o,
 })
 

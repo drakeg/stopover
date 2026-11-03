@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { directionsUrl, reverseGeocode, type LatLng } from '../lib/geo'
 import { CATEGORIES, type Place, type PlacePatch } from '../lib/supabase'
+import type { List } from '../lib/lists'
 import { LocationSearch } from './LocationSearch'
 import { MapView } from './MapView'
 
 /** Tidy up a place later: rename, add details, move the pin to the exact spot. */
-export function EditPlace({ place, onSave, onCancel }: {
-  place: Place; onSave: (patch: PlacePatch) => Promise<void>; onCancel: () => void
+export function EditPlace({ place, lists = [], addedBy, onSave, onCancel }: {
+  place: Place; lists?: List[]; addedBy?: string; onSave: (patch: PlacePatch) => Promise<void>; onCancel: () => void
 }) {
   const [spot, setSpot] = useState<LatLng>({ lat: place.lat, lng: place.lng })
   const [moved, setMoved] = useState(false)
@@ -16,6 +17,7 @@ export function EditPlace({ place, onSave, onCancel }: {
   const [notes, setNotes] = useState(place.notes ?? '')
   const [address, setAddress] = useState(place.address ?? '')
   const [approximate, setApproximate] = useState(place.approximate)
+  const [listId, setListId] = useState(place.list_id)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -36,7 +38,7 @@ export function EditPlace({ place, onSave, onCancel }: {
     try {
       await onSave({
         name: name.trim(), near: near.trim() || null, category: category || null, notes: notes.trim() || null,
-        approximate, ...(moved ? { lat: spot.lat, lng: spot.lng, address: address || null } : {}),
+        approximate, ...(listId !== place.list_id ? { list_id: listId } : {}), ...(moved ? { lat: spot.lat, lng: spot.lng, address: address || null } : {}),
       })
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not save')
@@ -47,6 +49,7 @@ export function EditPlace({ place, onSave, onCancel }: {
   return (
     <section className="card">
       <h2>Edit place</h2>
+      {addedBy && <p className="muted small" style={{ marginTop: '-.4rem' }}>Added by {addedBy}</p>}
       <form onSubmit={save} className="stack">
         <label>Name<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={200} /></label>
         <label>Where<input value={near} onChange={(e) => setNear(e.target.value)} placeholder="e.g. I-40 exit 356" /></label>
@@ -82,6 +85,14 @@ export function EditPlace({ place, onSave, onCancel }: {
           </label>
         </div>
 
+        {lists.length > 1 && (
+          <label>
+            List
+            <select value={listId} onChange={(e) => setListId(e.target.value)}>
+              {lists.map((l) => <option key={l.id} value={l.id}>{l.name}{l.member_count > 1 ? ' (shared)' : ''}</option>)}
+            </select>
+          </label>
+        )}
         {err && <p className="error">{err}</p>}
         <div className="row">
           <button type="button" className="btn" onClick={onCancel}>Cancel</button>

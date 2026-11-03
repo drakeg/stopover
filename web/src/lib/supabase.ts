@@ -21,6 +21,7 @@ export type Place = {
   url: string | null
   near: string | null
   approximate: boolean
+  list_id: string
   city: string | null
   state: string | null
   country: string | null
@@ -29,7 +30,7 @@ export type Place = {
   created_at: string
 }
 
-export type NewPlace = Pick<Place, 'name' | 'lat' | 'lng'> &
+export type NewPlace = Pick<Place, 'name' | 'lat' | 'lng'> & Partial<Pick<Place, 'list_id'>> &
   Partial<Pick<Place, 'notes' | 'category' | 'address' | 'url' | 'near' | 'approximate'>>
 
 export type PlacePatch = Partial<Omit<Place, 'id' | 'user_id' | 'created_at'>>
@@ -69,6 +70,7 @@ export type Profile = {
   display_name: string | null
   default_detour_mi: number
   maps_app: MapsPref
+  active_list_id: string | null
 }
 
 export const DEFAULT_PROFILE = { display_name: null, default_detour_mi: 25, maps_app: 'google' as MapsPref }
@@ -79,7 +81,7 @@ export async function loadProfile(user: { id: string; user_metadata?: Record<str
   if (error) throw error
   if (data) return data as Profile
   const fromSignup = typeof user.user_metadata?.display_name === 'string' ? user.user_metadata.display_name : null
-  const fresh = { id: user.id, ...DEFAULT_PROFILE, display_name: fromSignup }
+  const fresh = { id: user.id, ...DEFAULT_PROFILE, display_name: fromSignup, active_list_id: null }
   const ins = await supabase.from('profiles').insert(fresh).select().single()
   return (ins.data as Profile) ?? fresh
 }

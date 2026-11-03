@@ -159,3 +159,17 @@ a.btn { color: var(--green-2); }
 .places li.chosen-row { border-color: var(--green-2); background: #f1f7f2; }
 .select-bar { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 8px); display: flex; gap: .5rem; padding: .6rem;
   background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / .12); z-index: 5; }
+
+.list-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem .75rem; }
+.list-bar select { width: auto; max-width: 60%; font-weight: 600; padding: .45rem .6rem; }
+.list-name { font-family: Bitter, Georgia, serif; font-size: 1.1rem; }
+.list-share .btn.link { padding: 0; }
+.list-picker { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.list-picker label { display: flex; flex-direction: row; align-items: center; gap: .6rem; padding: .6rem .7rem; border: 1px solid var(--line);
+  border-radius: 10px; background: #fff; cursor: pointer; font-weight: 400; }
+.list-picker label.on { border-color: var(--green-2); background: #f1f7f2; }
+.list-picker input { width: auto; accent-color: var(--green); }
+.list-manage { border-top: 1px solid var(--line); padding-top: .8rem; }
+.people { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.people li { display: flex; align-items: center; gap: .5rem; padding: .35rem 0; }
+.join p { margin: 0; }

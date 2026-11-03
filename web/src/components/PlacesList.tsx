@@ -5,12 +5,14 @@ import { MapView } from './MapView'
 
 export function PlacesList({
   places,
+  addedBy,
   onEdit,
   onRoute,
   onToggleVisited,
   onDelete,
 }: {
   places: Place[]
+  addedBy?: (p: Place) => string | undefined
   onEdit: (p: Place) => void
   onRoute: (ps: Place[]) => void
   onToggleVisited: (p: Place) => void
@@ -80,7 +82,8 @@ export function PlacesList({
                 {p.approximate && <span className="tag">approx. location</span>}
               </div>
               <div className="muted small">
-                {[p.near, p.category, p.address?.split(',').slice(-4, -2).join(',').trim()].filter(Boolean).join(' · ')}
+                {[p.near, p.category, [p.city, p.state].filter(Boolean).join(', ') || p.address?.split(',').slice(-4, -2).join(',').trim(),
+                  addedBy?.(p) ? `added by ${addedBy(p)}` : null].filter(Boolean).join(' · ')}
               </div>
               {p.notes && <div className="notes">{p.notes}</div>}
             </button>

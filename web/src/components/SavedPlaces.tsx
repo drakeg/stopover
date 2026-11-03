@@ -12,7 +12,7 @@ const fmtDate = (iso: string | null) =>
 const QUERY_KEY = 'stopover.savedPlacesQuery'
 
 /** Searchable, filterable, sortable list of everything the user has saved. */
-export function SavedPlaces({ places, onEdit }: { places: Place[]; onEdit: (p: Place) => void }) {
+export function SavedPlaces({ places, listName, onEdit }: { places: Place[]; listName?: string; onEdit: (p: Place) => void }) {
   // Remembered for this browser session, so filters survive opening a place to edit it.
   const [q, setQ] = useState<PlaceQuery>(() => {
     try { return { ...EMPTY_QUERY, ...JSON.parse(sessionStorage.getItem(QUERY_KEY) ?? '{}') } } catch { return EMPTY_QUERY }
@@ -31,7 +31,7 @@ export function SavedPlaces({ places, onEdit }: { places: Place[]; onEdit: (p: P
 
   return (
     <section className="card stack saved">
-      <h2>Saved places <span className="muted">({places.length})</span></h2>
+      <h2>{listName ? `Places in “${listName}”` : 'Saved places'} <span className="muted">({places.length})</span></h2>
       {places.length === 0 ? (
         <p className="muted">Nothing saved yet.</p>
       ) : (
