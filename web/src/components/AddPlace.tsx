@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { reverseGeocode, type LatLng } from '../lib/geo'
 import { getCurrentLocation, type Fix } from '../lib/location'
 import { compass, findByName, findNearby, matchName, searchWords, type NearbyPlace } from '../lib/nearby'
-import { CATEGORIES, type NewPlace } from '../lib/supabase'
+import { CATEGORIES, type NewPlace, type Place } from '../lib/supabase'
+import { checkDuplicates, findDuplicates, placesNear, type DuplicateHit } from '../lib/duplicates'
+import type { List } from '../lib/lists'
+import { DuplicateWarning } from './DuplicateWarning'
 import { LocationSearch } from './LocationSearch'
 import { MapView } from './MapView'
 
@@ -23,7 +26,9 @@ function whereLabel(p: NearbyPlace): string {
  * only thing to type is what the sign said. Nearby attractions load in the
  * background; tapping one saves its exact spot instead of the road.
  */
-export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promise<void>; onCancel: () => void }) {
+type AddProps = { onSave: (p: NewPlace) => Promise<void>; onCancel: () => void; lists: List[]; onOpenExisting: (p: Place) => void }
+
+export function AddPlace({ onSave, onCancel, lists, onOpenExisting }: AddProps) {
   const [precise, setPrecise] = useState(false)
   const [gps, setGps] = useState<Gps>({ status: 'locating' })
   const gpsPromise = useRef<Promise<Fix> | null>(null)
@@ -35,6 +40,8 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
   const [showAll, setShowAll] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [dups, setDups] = useState<DuplicateHit[] | null>(null)
+  const [saved, setSaved] = useState<Place[]>([]) // already in your lists, near here
 
   useEffect(() => {
     const ctrl = new AbortController()
@@ -43,6 +50,7 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
     p.then(
       (pos) => {
         setGps({ status: 'ok', pos })
+        placesNear(pos.lat, pos.lng).then(setSaved).catch(() => {})
         setNearby({ status: 'loading', items: [] })
         findNearby(pos, ctrl.signal).then(
           (items) => setNearby({ status: 'ok', items }),
@@ -82,28 +90,30 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
     setName(p.name)
   }
 
-  async function quickSave(e: React.FormEvent) {
-    e.preventDefault()
+  /** Which of your saved places a suggestion already is (for the "Saved" / "Been" badges). */
+  const savedAs = (p: NearbyPlace) => findDuplicates({ name: p.name, lat: p.lat, lng: p.lng, osm_id: p.id }, saved)[0]?.place
+
+  async function quickSave(e?: React.FormEvent, force = false) {
+    e?.preventDefault()
     if (!name.trim()) return
     setBusy(true)
     setErr(null)
     try {
-      if (picked) {
-        await onSave({
-          name: name.trim(), near: near.trim() || null, lat: picked.lat, lng: picked.lng,
-          approximate: false, category: picked.category,
-        })
-      } else {
-        const pos = await gpsPromise.current!
-        await onSave({ name: name.trim(), near: near.trim() || null, lat: pos.lat, lng: pos.lng, approximate: true })
+      const place: NewPlace = picked
+        ? { name: name.trim(), near: near.trim() || null, lat: picked.lat, lng: picked.lng, approximate: false, category: picked.category, osm_id: picked.id }
+        : await gpsPromise.current!.then((pos) => ({ name: name.trim(), near: near.trim() || null, lat: pos.lat, lng: pos.lng, approximate: true }))
+      if (!force) {
+        const hits = await checkDuplicates(place)
+        if (hits.length) { setDups(hits); setBusy(false); return }
       }
+      await onSave(place)
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not save')
       setBusy(false)
     }
   }
 
-  if (precise) return <PreciseAdd initialName={name} initialNear={near} onSave={onSave} onCancel={onCancel} />
+  if (precise) return <PreciseAdd initialName={name} initialNear={near} onSave={onSave} onCancel={onCancel} lists={lists} onOpenExisting={onOpenExisting} />
 
   const lookingUp = nearby.status === 'loading' || byName.status === 'loading'
 
@@ -143,7 +153,13 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
                   {shown.map((p) => (
                     <li key={p.id}>
                       <button type="button" onClick={() => pick(p)}>
-                        <span className="name">{p.name}</span>
+                        <span className="name">
+                          {p.name}
+                          {(() => {
+                            const mine = savedAs(p)
+                            return mine ? <span className={`tag ${mine.visited ? 'been' : ''}`}>{mine.visited ? 'been there' : 'saved'}</span> : null
+                          })()}
+                        </span>
                         <span className="muted small">{p.kind} · {whereLabel(p)}</span>
                       </button>
                     </li>
@@ -178,7 +194,10 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
         )}
 
         {err && <p className="error">{err}</p>}
-        {gps.status === 'error' && !picked ? (
+        {dups ? (
+          <DuplicateWarning hits={dups} lists={lists} busy={busy} onOpen={onOpenExisting}
+            onSaveAnyway={() => quickSave(undefined, true)} onBack={() => setDups(null)} />
+        ) : gps.status === 'error' && !picked ? (
           <button type="button" className="btn primary wide" onClick={() => setPrecise(true)}>Pick the spot on the map</button>
         ) : (
           <button className="btn primary wide big" disabled={busy || !name.trim()}>
@@ -195,9 +214,9 @@ export function AddPlace({ onSave, onCancel }: { onSave: (p: NewPlace) => Promis
 }
 
 /** Slower path for when you're not on the road: search or tap the map, add details. */
-function PreciseAdd({ initialName, initialNear, onSave, onCancel }: {
-  initialName: string; initialNear: string; onSave: (p: NewPlace) => Promise<void>; onCancel: () => void
-}) {
+function PreciseAdd({ initialName, initialNear, onSave, onCancel, lists, onOpenExisting }: {
+  initialName: string; initialNear: string } & AddProps) {
+  const [dups, setDups] = useState<DuplicateHit[] | null>(null)
   const [spot, setSpot] = useState<LatLng | null>(null)
   const [name, setName] = useState(initialName)
   const [near, setNear] = useState(initialNear)
@@ -218,15 +237,20 @@ function PreciseAdd({ initialName, initialNear, onSave, onCancel }: {
     if (r) setAddress(r.address)
   }
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault()
+  async function save(e?: React.FormEvent, force = false) {
+    e?.preventDefault()
     if (!spot || !name.trim()) return
     setBusy(true)
     try {
-      await onSave({
+      const place: NewPlace = {
         name: name.trim(), lat: spot.lat, lng: spot.lng, near: near.trim() || null,
         address: address || null, category: category || null, notes: notes.trim() || null, approximate: false,
-      })
+      }
+      if (!force) {
+        const hits = await checkDuplicates(place)
+        if (hits.length) { setDups(hits); setBusy(false); return }
+      }
+      await onSave(place)
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not save')
       setBusy(false)
@@ -256,10 +280,15 @@ function PreciseAdd({ initialName, initialNear, onSave, onCancel }: {
         </label>
         <label>Notes<textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Why you want to go, hours, RV parking…" /></label>
         {address && <p className="muted small">{address}</p>}
-        <div className="row">
-          <button type="button" className="btn" onClick={onCancel}>Cancel</button>
-          <button className="btn primary" disabled={busy || !spot || !name.trim()}>{spot ? 'Save to my list' : 'Tap the map first'}</button>
-        </div>
+        {dups ? (
+          <DuplicateWarning hits={dups} lists={lists} busy={busy} onOpen={onOpenExisting}
+            onSaveAnyway={() => save(undefined, true)} onBack={() => setDups(null)} />
+        ) : (
+          <div className="row">
+            <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+            <button className="btn primary" disabled={busy || !spot || !name.trim()}>{spot ? 'Save to my list' : 'Tap the map first'}</button>
+          </div>
+        )}
       </form>
     </section>
   )

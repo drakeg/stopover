@@ -22,6 +22,7 @@ export type Place = {
   near: string | null
   approximate: boolean
   list_id: string
+  osm_id: string | null
   city: string | null
   state: string | null
   country: string | null
@@ -31,7 +32,7 @@ export type Place = {
 }
 
 export type NewPlace = Pick<Place, 'name' | 'lat' | 'lng'> & Partial<Pick<Place, 'list_id'>> &
-  Partial<Pick<Place, 'notes' | 'category' | 'address' | 'url' | 'near' | 'approximate'>>
+  Partial<Pick<Place, 'notes' | 'category' | 'address' | 'url' | 'near' | 'approximate' | 'osm_id'>>
 
 export type PlacePatch = Partial<Omit<Place, 'id' | 'user_id' | 'created_at'>>
 

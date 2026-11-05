@@ -173,3 +173,30 @@ a.btn { color: var(--green-2); }
 .people { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .people li { display: flex; align-items: center; gap: .5rem; padding: .35rem 0; }
 .join p { margin: 0; }
+
+.dup { display: grid; gap: .6rem; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: .8rem; }
+.dup ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.dup li { display: flex; gap: .6rem; align-items: center; }
+
+.segmented.two { grid-template-columns: 1fr 1fr; margin-bottom: 0; }
+.empty-tab { text-align: center; padding: .5rem 1rem; }
+.been-line { color: var(--green); font-weight: 500; }
+.stars { color: #d97706; letter-spacing: .05em; }
+.star-sum { display: inline-flex; gap: .3rem; align-items: baseline; font-weight: 600; }
+.star-sum.small { font-size: .85rem; margin-top: .15rem; }
+.star-picker { display: flex; gap: .25rem; }
+.star-picker button { border: 0; background: none; font-size: 2.2rem; line-height: 1; color: #d6d3d1; cursor: pointer; padding: .1rem; }
+.star-picker button.on { color: #f59e0b; }
+.sheet-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / .4); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; }
+.sheet { width: 100%; max-width: 560px; max-height: 92dvh; overflow: auto; border-radius: 18px 18px 0 0;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px); }
+@media (min-width: 640px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: 18px; } }
+.review-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .8rem; }
+.review-list li { border-top: 1px solid var(--line); padding-top: .7rem; display: grid; gap: .3rem; }
+.review-head { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
+.review-facts { display: flex; gap: .4rem; flex-wrap: wrap; }
+.fact { background: var(--paper); border-radius: 6px; padding: .1rem .45rem; }
+.review-note { margin: 0; white-space: pre-wrap; }
+.dup .btn { white-space: normal; text-align: center; }
+.dup, .dup li, .dup .grow { min-width: 0; }
+.card, .stack > * { min-width: 0; }

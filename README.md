@@ -85,6 +85,19 @@ In My places, **Route several…** → tick places → choose a start (defaults 
 exactly for up to 12 stops and by nearest-neighbour + 2-opt above that; it falls back to straight-line distance if
 the drive-time server is down. Opens in Google or Apple Maps, split into parts if the trip has more stops than one link holds.
 
+## Been there, duplicates and reviews
+
+- **Been there:** tapping *Been* moves a place to the *Been there* tab with the date (editable), instead of hiding it.
+  *Undo* moves it back. Trip planning skips places you've been.
+- **Duplicates:** before saving, Stopover checks every list you're on (to-visit and visited) for the same place —
+  same OpenStreetMap feature, a similar name nearby (up to 30 mi when a pin came from the road), or the same spot.
+  You can open the existing one or save anyway. Nearby suggestions you already have are tagged *saved* / *been there*.
+- **Reviews:** after a visit, rate 1–5 stars with RV parking, cost, notes and visit date. Reviews are shared with
+  all Stopover users (first name only) and matched to the same real place across everyone's lists by OSM id or by
+  spot + similar name (`pg_trgm`). Reviews of places whose pin is only "where we were on the road" stay private until
+  the pin is fixed. Star averages show in My places and on trip stops; the place screen lists the reviews.
+- DB: `reviews` (RLS: own rows only), `place_reviews()` / `review_summaries()` return only public fields.
+
 ## Shared lists
 
 Places belong to a **list**. Everyone starts with "My places"; you can make more (Account → Lists).
@@ -121,8 +134,10 @@ schema); invites go through `invite_info()` / `accept_invite()`; `places.list_id
 2. **Redirect URLs.** **Authentication → URL Configuration**: Site URL `https://drakeg.github.io/stopover/`
    and Redirect URL `https://drakeg.github.io/stopover/**` (needed for confirm, reset and email-change links).
 3. **Leaked-password protection.** **Authentication → Sign In / Providers → Email** (may require a paid plan).
-4. **Privacy policy and terms.** Needed for the app stores and good practice; the app stores locations people save.
-5. **Map services.** Move off the free OpenStreetMap search/routing/Overpass servers (see Map services above).
+4. **Review moderation.** Reviews are visible to every user: add a "report" button and a way to remove abusive
+   reviews before a public launch.
+5. **Privacy policy and terms.** Needed for the app stores and good practice; the app stores locations people save.
+6. **Map services.** Move off the free OpenStreetMap search/routing/Overpass servers (see Map services above).
    Overpass asks that public apps run their own instance or use a paid places API (Google Places Nearby, Mapbox, Foursquare).
 
 ## Ideas for later

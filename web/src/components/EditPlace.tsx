@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { directionsUrl, reverseGeocode, type LatLng } from '../lib/geo'
 import { CATEGORIES, type Place, type PlacePatch } from '../lib/supabase'
 import type { List } from '../lib/lists'
+import { PlaceReviews } from './Reviews'
 import { LocationSearch } from './LocationSearch'
 import { MapView } from './MapView'
 
 /** Tidy up a place later: rename, add details, move the pin to the exact spot. */
-export function EditPlace({ place, lists = [], addedBy, onSave, onCancel }: {
-  place: Place; lists?: List[]; addedBy?: string; onSave: (patch: PlacePatch) => Promise<void>; onCancel: () => void
+export function EditPlace({ place, lists = [], addedBy, reviewsKey, onReview, onSave, onCancel }: {
+  place: Place; lists?: List[]; addedBy?: string; reviewsKey?: number; onReview?: () => void
+  onSave: (patch: PlacePatch) => Promise<void>; onCancel: () => void
 }) {
   const [spot, setSpot] = useState<LatLng>({ lat: place.lat, lng: place.lng })
   const [moved, setMoved] = useState(false)
@@ -47,8 +49,14 @@ export function EditPlace({ place, lists = [], addedBy, onSave, onCancel }: {
   }
 
   return (
+    <>
     <section className="card">
-      <h2>Edit place</h2>
+      <h2>{place.name}</h2>
+      {place.visited && (
+        <p className="ok small" style={{ marginTop: '-.4rem' }}>
+          ✓ You’ve been here{place.visited_at ? ` · ${new Date(place.visited_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+        </p>
+      )}
       {addedBy && <p className="muted small" style={{ marginTop: '-.4rem' }}>Added by {addedBy}</p>}
       <form onSubmit={save} className="stack">
         <label>Name<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={200} /></label>
@@ -100,5 +108,7 @@ export function EditPlace({ place, lists = [], addedBy, onSave, onCancel }: {
         </div>
       </form>
     </section>
+    <PlaceReviews place={place} refreshKey={reviewsKey} onReview={onReview} />
+    </>
   )
 }

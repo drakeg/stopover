@@ -7,6 +7,8 @@ import { getCurrentLocation } from '../lib/location'
 import { supabase, type Place, type Trip } from '../lib/supabase'
 import { LocationSearch } from './LocationSearch'
 import { MapView, type MapPin } from './MapView'
+import { StarSummary } from './Reviews'
+import type { Summary } from '../lib/reviews'
 
 const DETOURS = [5, 10, 25, 50, 100]
 
@@ -41,8 +43,9 @@ export function Endpoint({ label, value, onChange, allowHere }: {
   )
 }
 
-export function TripPlanner({ places, trips, onTripsChanged, defaultDetour = 25, mapsFirst = 'google' }: {
+export function TripPlanner({ places, trips, onTripsChanged, defaultDetour = 25, mapsFirst = 'google', summaries = {} }: {
   places: Place[]; trips: Trip[]; onTripsChanged: () => void; defaultDetour?: number; mapsFirst?: MapsApp
+  summaries?: Record<string, Summary>
 }) {
   const [start, setStart] = useState<Located | null>(null)
   const [end, setEnd] = useState<Located | null>(null)
@@ -167,6 +170,7 @@ export function TripPlanner({ places, trips, onTripsChanged, defaultDetour = 25,
                     {s.place.near ? ` · ${s.place.near}` : ''}
                     {s.place.category ? ` · ${s.place.category}` : ''}
                   </div>
+                  <StarSummary s={summaries[s.place.id]} small />
                   {s.place.notes && <div className="notes">{s.place.notes}</div>}
                 </div>
                 <a className="btn small" href={directionsUrl(s.place)} target="_blank" rel="noreferrer">{s.place.approximate ? 'Find' : 'Go'}</a>

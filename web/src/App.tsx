@@ -11,6 +11,8 @@ import { JoinList } from './components/JoinList'
 import { PlacesList } from './components/PlacesList'
 import { TripPlanner } from './components/TripPlanner'
 import { RoutePlanner } from './components/RoutePlanner'
+import { ReviewSheet } from './components/Reviews'
+import { myRatings as loadMyRatings, reviewSummaries, syncReviewToPlace, type Summary } from './lib/reviews'
 
 type Tab = 'places' | 'trip'
 
@@ -32,6 +34,10 @@ export default function App() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [invite, setInvite] = useState<string | null>(() => captureInviteFromUrl())
+  const [reviewing, setReviewing] = useState<Place | null>(null)
+  const [summaries, setSummaries] = useState<Record<string, Summary>>({})
+  const [ratings, setRatings] = useState<Record<string, number>>({})
+  const [reviewsKey, setReviewsKey] = useState(0)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -137,6 +143,20 @@ export default function App() {
     return () => { clearTimeout(t); supabase.removeChannel(channel); document.removeEventListener('visibilitychange', onVisible) }
   }, [activeId, loadPlaces, refreshLists])
 
+  // Star averages for the list (everyone's reviews) and your own ratings of places you've been.
+  const placesKey = places.map((p) => `${p.id}:${p.lat}:${p.lng}:${p.name}:${p.visited}`).join('|')
+  const loadRatings = useCallback(async () => {
+    const ps = placesRef.current
+    try {
+      const [sum, mine] = await Promise.all([reviewSummaries(ps), loadMyRatings(ps.filter((p) => p.visited).map((p) => p.id))])
+      setSummaries(sum); setRatings(mine)
+    } catch { /* stars are a nicety; the list works without them */ }
+  }, [])
+  useEffect(() => {
+    const t = setTimeout(loadRatings, 400)
+    return () => clearTimeout(t)
+  }, [placesKey, loadRatings])
+
   /**
    * Fills in city/state (and the address, if missing) from the pin, in the background.
    * Saving never waits on this; the free address service allows ~1 lookup per second.
@@ -194,20 +214,45 @@ export default function App() {
       setPlaces((ps) => ps.map((x) => (x.id === p.id ? row : x)))
       if (patch.lat !== undefined) enrich(row) // moved on the map: city/state may have changed
     }
+    // Keep your review pointing at the corrected spot/name (and public once the pin is exact)
+    if (patch.lat !== undefined || patch.name !== undefined || patch.approximate !== undefined) {
+      syncReviewToPlace(row).then(() => setReviewsKey((k) => k + 1)).catch(() => {})
+    }
     if (close) {
       setEditing(null)
       if (editFromAccount) { setShowAccount(true); setEditFromAccount(false) }
     }
   }
 
-  async function toggleVisited(p: Place) {
-    const visited = !p.visited
-    setPlaces((ps) => ps.map((x) => (x.id === p.id ? { ...x, visited } : x)))
-    const { error } = await supabase
-      .from('places')
-      .update({ visited, visited_at: visited ? new Date().toISOString() : null })
-      .eq('id', p.id)
+  async function setVisited(p: Place, visited: boolean, at: string | null = visited ? new Date().toISOString() : null) {
+    const next = { ...p, visited, visited_at: at }
+    setPlaces((ps) => ps.map((x) => (x.id === p.id ? next : x)))
+    if (editing?.id === p.id) setEditing(next)
+    const { error } = await supabase.from('places').update({ visited, visited_at: at }).eq('id', p.id)
     if (error) { setErr(error.message); loadPlaces() }
+    return next
+  }
+
+  /** "Been": keep it (in the Been there tab) with today's date, and offer to rate it. */
+  async function markBeen(p: Place) {
+    setReviewing(await setVisited(p, true))
+  }
+
+  async function closeReview(result?: { visited_on: string | null }) {
+    const p = reviewing
+    setReviewing(null)
+    if (p && result?.visited_on && p.visited && p.visited_at?.slice(0, 10) !== result.visited_on) {
+      await setVisited(p, true, new Date(`${result.visited_on}T12:00:00`).toISOString())
+    }
+    setReviewsKey((k) => k + 1)
+    loadRatings()
+  }
+
+  /** From the duplicate warning: jump to the place you already have (switching lists if needed). */
+  function openExisting(p: Place) {
+    setAdding(false)
+    if (p.list_id !== activeId) switchList(p.list_id)
+    setEditing(p)
   }
 
   async function deletePlace(p: Place) {
@@ -278,7 +323,7 @@ export default function App() {
             )}
             {!showAccount && tab === 'places' && (
               adding
-                ? <AddPlace onSave={addPlace} onCancel={() => setAdding(false)} />
+                ? <AddPlace onSave={addPlace} onCancel={() => setAdding(false)} lists={lists} onOpenExisting={openExisting} />
                 : routing
                 ? <RoutePlanner initial={routing} mapsFirst={profile?.maps_app ?? 'google'} onClose={() => setRouting(null)} />
                 : editing
@@ -286,6 +331,8 @@ export default function App() {
                     place={editing}
                     lists={lists}
                     addedBy={editing.user_id && editing.user_id !== session.user.id ? memberNames[editing.user_id] : undefined}
+                    reviewsKey={reviewsKey}
+                    onReview={() => setReviewing(editing)}
                     onSave={(patch) => updatePlace(editing, patch)}
                     onCancel={() => {
                       setEditing(null)
@@ -297,9 +344,13 @@ export default function App() {
                     <PlacesList
                       places={places}
                       addedBy={members.length > 1 ? (p) => (p.user_id && p.user_id !== session.user.id ? memberNames[p.user_id] : undefined) : undefined}
+                      summaries={summaries}
+                      myRatings={ratings}
                       onEdit={setEditing}
                       onRoute={setRouting}
-                      onToggleVisited={toggleVisited}
+                      onBeen={markBeen}
+                      onUndoBeen={(p) => setVisited(p, false)}
+                      onRate={setReviewing}
                       onDelete={deletePlace}
                     />
                   </>
@@ -312,11 +363,13 @@ export default function App() {
                 onTripsChanged={loadTrips}
                 defaultDetour={profile?.default_detour_mi ?? 25}
                 mapsFirst={profile?.maps_app ?? 'google'}
+                summaries={summaries}
               />
             )}
           </>
         )}
       </main>
+      {reviewing && <ReviewSheet place={reviewing} onClose={closeReview} />}
       <footer className="build muted small">Version {__BUILD__}</footer>
     </div>
   )
