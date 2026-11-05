@@ -72,6 +72,8 @@ export type Profile = {
   default_detour_mi: number
   maps_app: MapsPref
   active_list_id: string | null
+  presence_visibility?: 'no-one' | 'friends' | 'everyone'
+  rig?: string | null
 }
 
 export const DEFAULT_PROFILE = { display_name: null, default_detour_mi: 25, maps_app: 'google' as MapsPref }

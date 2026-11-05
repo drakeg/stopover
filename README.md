@@ -98,6 +98,21 @@ the drive-time server is down. Opens in Google or Apple Maps, split into parts i
   the pin is fixed. Star averages show in My places and on trip stops; the place screen lists the reviews.
 - DB: `reviews` (RLS: own rows only), `place_reviews()` / `review_summaries()` return only public fields.
 
+## Meet up
+
+- **I'm here** (from a place's screen): checks your distance to the pin, optionally fixes a pin saved from the road,
+  and stays on for 4 hours or until *I've left*. Checking in somewhere else ends the previous one.
+- **I'm going**: pick a day; shows until the end of that day.
+- **Who sees it** (per check-in; default set in Account → Meet-ups & privacy): *No one*, *Friends*, or *Everyone*.
+  Others only see first name, rig, place, when and an optional note — never live location, last name or email.
+- **Friends**: friend invite links (single-use, 7 days) plus everyone on a shared list with you.
+- **Messages**: you can message someone whose check-in you can see, a friend, or someone who messaged you.
+  Live via Supabase Realtime, unread badge on the Meet up tab, block and report in every conversation.
+  Brakes: 60 messages/hour and 20 new conversations/day per person.
+- **Meet up tab**: messages, your check-ins, friends' plans (here now / coming up), friends and invites.
+- DB: `checkins`, `friendships`, `friend_invites`, `blocks`, `messages`, `reports`; others' check-ins only via
+  `who_is_at()`, `presence_summaries()`, `friends_plans()`.
+
 ## Shared lists
 
 Places belong to a **list**. Everyone starts with "My places"; you can make more (Account → Lists).
@@ -134,8 +149,9 @@ schema); invites go through `invite_info()` / `accept_invite()`; `places.list_id
 2. **Redirect URLs.** **Authentication → URL Configuration**: Site URL `https://drakeg.github.io/stopover/`
    and Redirect URL `https://drakeg.github.io/stopover/**` (needed for confirm, reset and email-change links).
 3. **Leaked-password protection.** **Authentication → Sign In / Providers → Email** (may require a paid plan).
-4. **Review moderation.** Reviews are visible to every user: add a "report" button and a way to remove abusive
-   reviews before a public launch.
+4. **Moderation.** Reviews and "Everyone" check-ins are visible to all users, and strangers can message. Reports land in
+   the `reports` table — someone needs to review them, and there should be a way to suspend accounts. Add a report
+   button on reviews too. Consider push/email notifications for new messages (the app only shows them in-app today).
 5. **Privacy policy and terms.** Needed for the app stores and good practice; the app stores locations people save.
 6. **Map services.** Move off the free OpenStreetMap search/routing/Overpass servers (see Map services above).
    Overpass asks that public apps run their own instance or use a paid places API (Google Places Nearby, Mapbox, Foursquare).

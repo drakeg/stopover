@@ -4,6 +4,7 @@ import { appUrl, saveProfile, supabase, type MapsPref, type Place, type Profile 
 import { friendlyAuthError, MIN_PASSWORD } from './Auth'
 import { SavedPlaces } from './SavedPlaces'
 import { ListsCard } from './ListsCard'
+import { PrivacyCard } from './PrivacyCard'
 import type { List } from '../lib/lists'
 
 type Msg = { kind: 'ok' | 'error'; text: string } | null
@@ -20,6 +21,7 @@ export function Account({ user, profile, places, lists, activeListId, onSwitchLi
     <>
       <button className="btn link" onClick={onClose}>‹ Back</button>
       <ProfileCard user={user} profile={profile} onProfile={onProfile} />
+      <PrivacyCard profile={profile} onProfile={onProfile} />
       <ListsCard userId={user.id} lists={lists} activeId={activeListId} onSwitch={onSwitchList} onChanged={onListsChanged} />
       <SavedPlaces places={places} listName={lists.find((l) => l.id === activeListId)?.name} onEdit={onEditPlace} />
       <EmailCard user={user} />

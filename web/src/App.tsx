@@ -12,9 +12,13 @@ import { PlacesList } from './components/PlacesList'
 import { TripPlanner } from './components/TripPlanner'
 import { RoutePlanner } from './components/RoutePlanner'
 import { ReviewSheet } from './components/Reviews'
+import { PlacePresence } from './components/PlacePresence'
+import { Chat } from './components/Chat'
+import { JoinFriend, MeetUp } from './components/MeetUp'
+import { captureFriendInviteFromUrl, myConversations, pendingFriend, presenceSummaries, type Checkin, type PresenceCount } from './lib/social'
 import { myRatings as loadMyRatings, reviewSummaries, syncReviewToPlace, type Summary } from './lib/reviews'
 
-type Tab = 'places' | 'trip'
+type Tab = 'places' | 'trip' | 'meet'
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
@@ -38,6 +42,11 @@ export default function App() {
   const [summaries, setSummaries] = useState<Record<string, Summary>>({})
   const [ratings, setRatings] = useState<Record<string, number>>({})
   const [reviewsKey, setReviewsKey] = useState(0)
+  const [chat, setChat] = useState<{ other_id: string; first_name: string; checkin_id?: string | null } | null>(null)
+  const [unread, setUnread] = useState(0)
+  const [meetKey, setMeetKey] = useState(0)
+  const [friendInvite, setFriendInvite] = useState<string | null>(() => captureFriendInviteFromUrl())
+  const [presence, setPresence] = useState<Record<string, PresenceCount>>({})
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -105,6 +114,26 @@ export default function App() {
     loadMembers(activeList.id).then(setMembers).catch(() => setMembers([]))
   }, [activeList?.id, activeList?.member_count]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ---------- messages ----------
+  const loadUnread = useCallback(async () => {
+    if (!session) return
+    try { setUnread((await myConversations()).reduce((n, c) => n + Number(c.unread), 0)) } catch { /* ignore */ }
+  }, [session])
+  useEffect(() => {
+    if (!session) return
+    loadUnread()
+    const ch = supabase
+      .channel('inbox')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${session.user.id}` }, () => {
+        loadUnread(); setMeetKey((k) => k + 1)
+      })
+      .subscribe()
+    const t = setInterval(loadUnread, 60000)
+    const onVisible = () => { if (document.visibilityState === 'visible') loadUnread() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { supabase.removeChannel(ch); clearInterval(t); document.removeEventListener('visibilitychange', onVisible) }
+  }, [session, loadUnread])
+
   // ---------- places ----------
   const loadPlaces = useCallback(async () => {
     if (!activeId) return
@@ -148,8 +177,12 @@ export default function App() {
   const loadRatings = useCallback(async () => {
     const ps = placesRef.current
     try {
-      const [sum, mine] = await Promise.all([reviewSummaries(ps), loadMyRatings(ps.filter((p) => p.visited).map((p) => p.id))])
-      setSummaries(sum); setRatings(mine)
+      const [sum, mine, pres] = await Promise.all([
+        reviewSummaries(ps),
+        loadMyRatings(ps.filter((p) => p.visited).map((p) => p.id)),
+        presenceSummaries(ps.filter((p) => !p.visited)).catch(() => ({})),
+      ])
+      setSummaries(sum); setRatings(mine); setPresence(pres)
     } catch { /* stars are a nicety; the list works without them */ }
   }, [])
   useEffect(() => {
@@ -221,7 +254,18 @@ export default function App() {
     if (close) {
       setEditing(null)
       if (editFromAccount) { setShowAccount(true); setEditFromAccount(false) }
+    } else if (editing?.id === p.id) {
+      setEditing(row)
     }
+  }
+
+  /** From Meet up: open the place a check-in belongs to (switching lists if needed). */
+  async function openPlaceByCheckin(c: Checkin) {
+    if (!c.place_id) return setToast('That place is no longer on any of your lists.')
+    const { data } = await supabase.from('places').select('*').eq('id', c.place_id).maybeSingle()
+    if (!data) return setToast('That place is no longer on any of your lists.')
+    setTab('places'); setShowAccount(false)
+    openExisting(data as Place)
   }
 
   async function setVisited(p: Place, visited: boolean, at: string | null = visited ? new Date().toISOString() : null) {
@@ -266,7 +310,11 @@ export default function App() {
   if (session === undefined) return <div className="splash" />
   if (recovering && session)
     return <SetNewPassword onDone={() => { setRecovering(false); setToast('Password updated — you’re signed in.') }} />
-  if (!session) return <Auth notice={invite ? 'You’ve been invited to a shared list. Sign in, or create an account, to join it.' : undefined} />
+  if (!session) {
+    return <Auth notice={
+      invite ? 'You’ve been invited to a shared list. Sign in, or create an account, to join it.'
+        : friendInvite ? 'Someone invited you to be friends on Stopover. Sign in, or create an account, to accept.' : undefined} />
+  }
 
   const openLists = () => {
     setShowAccount(true)
@@ -285,13 +333,21 @@ export default function App() {
       <nav className="tabs">
         <button className={tab === 'places' && !showAccount ? 'on' : ''} onClick={() => { setTab('places'); setShowAccount(false); setRouting(null) }}>My places</button>
         <button className={tab === 'trip' && !showAccount ? 'on' : ''} onClick={() => { setTab('trip'); setShowAccount(false) }}>Plan a trip</button>
+        <button className={tab === 'meet' && !showAccount ? 'on' : ''} onClick={() => { setTab('meet'); setShowAccount(false); setChat(null); setMeetKey((k) => k + 1) }}>
+          Meet up{unread > 0 && <span className="badge" aria-label={`${unread} unread`}>{unread}</span>}
+        </button>
       </nav>
 
       <main className="content">
         {toast && <p className="ok banner-ok" onClick={() => setToast(null)}>{toast}</p>}
         {err && <p className="error banner" onClick={() => setErr(null)}>{err}</p>}
 
-        {invite && lists.length > 0 ? (
+        {friendInvite ? (
+          <JoinFriend code={friendInvite} onDone={(msg) => {
+            pendingFriend.clear(); setFriendInvite(null)
+            if (msg) { setToast(msg); setTab('meet'); setMeetKey((k) => k + 1) }
+          }} />
+        ) : invite && lists.length > 0 ? (
           <JoinList
             code={invite}
             current={activeList}
@@ -333,6 +389,16 @@ export default function App() {
                     addedBy={editing.user_id && editing.user_id !== session.user.id ? memberNames[editing.user_id] : undefined}
                     reviewsKey={reviewsKey}
                     onReview={() => setReviewing(editing)}
+                    children={
+                      <PlacePresence
+                        key={editing.id}
+                        place={editing}
+                        defaultVisibility={profile?.presence_visibility ?? 'friends'}
+                        onFixPin={async (pos) => { await updatePlace(editing, { lat: pos.lat, lng: pos.lng, approximate: false }, false) }}
+                        onMessage={(w) => { setChat({ other_id: w.user_id, first_name: w.first_name, checkin_id: w.checkin_id }); setTab('meet') }}
+                        onChanged={() => { loadRatings(); setMeetKey((k) => k + 1) }}
+                      />
+                    }
                     onSave={(patch) => updatePlace(editing, patch)}
                     onCancel={() => {
                       setEditing(null)
@@ -346,6 +412,7 @@ export default function App() {
                       addedBy={members.length > 1 ? (p) => (p.user_id && p.user_id !== session.user.id ? memberNames[p.user_id] : undefined) : undefined}
                       summaries={summaries}
                       myRatings={ratings}
+                      presence={presence}
                       onEdit={setEditing}
                       onRoute={setRouting}
                       onBeen={markBeen}
@@ -365,6 +432,24 @@ export default function App() {
                 mapsFirst={profile?.maps_app ?? 'google'}
                 summaries={summaries}
               />
+            )}
+            {!showAccount && tab === 'meet' && (
+              chat
+                ? <Chat
+                    key={chat.other_id}
+                    me={session.user.id}
+                    other={chat.other_id}
+                    firstName={chat.first_name}
+                    checkinId={chat.checkin_id}
+                    onBack={() => { setChat(null); setMeetKey((k) => k + 1) }}
+                    onBlocked={() => { setChat(null); setToast(`Blocked ${chat.first_name}.`); setMeetKey((k) => k + 1); loadUnread() }}
+                    onRead={loadUnread}
+                  />
+                : <MeetUp
+                    refreshKey={meetKey}
+                    onOpenChat={(c) => setChat(c)}
+                    onOpenPlaceByCheckin={openPlaceByCheckin}
+                  />
             )}
           </>
         )}

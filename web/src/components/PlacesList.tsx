@@ -15,6 +15,7 @@ export function PlacesList({
   addedBy,
   summaries = {},
   myRatings = {},
+  presence = {},
   onEdit,
   onRoute,
   onBeen,
@@ -26,6 +27,7 @@ export function PlacesList({
   addedBy?: (p: Place) => string | undefined
   summaries?: Record<string, Summary>
   myRatings?: Record<string, number>
+  presence?: Record<string, { here: number; going: number }>
   onEdit: (p: Place) => void
   onRoute: (ps: Place[]) => void
   onBeen: (p: Place) => void
@@ -123,6 +125,11 @@ export function PlacesList({
                   addedBy?.(p) ? `added by ${addedBy(p)}` : null].filter(Boolean).join(' · ')}
               </div>
               {view === 'to-visit' && <StarSummary s={summaries[p.id]} small />}
+              {view === 'to-visit' && presence[p.id] && (
+                <div className="small presence-badge">
+                  👋 {[presence[p.id].here ? `${presence[p.id].here} here now` : null, presence[p.id].going ? `${presence[p.id].going} going` : null].filter(Boolean).join(' · ')}
+                </div>
+              )}
               {p.notes && <div className="notes">{p.notes}</div>}
             </button>
             {!selecting && (
