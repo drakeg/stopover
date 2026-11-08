@@ -389,21 +389,20 @@ export default function App() {
                     addedBy={editing.user_id && editing.user_id !== session.user.id ? memberNames[editing.user_id] : undefined}
                     reviewsKey={reviewsKey}
                     onReview={() => setReviewing(editing)}
-                    children={
-                      <PlacePresence
-                        key={editing.id}
-                        place={editing}
-                        defaultVisibility={profile?.presence_visibility ?? 'friends'}
-                        onFixPin={async (pos) => { await updatePlace(editing, { lat: pos.lat, lng: pos.lng, approximate: false }, false) }}
-                        onMessage={(w) => { setChat({ other_id: w.user_id, first_name: w.first_name, checkin_id: w.checkin_id }); setTab('meet') }}
-                        onChanged={() => { loadRatings(); setMeetKey((k) => k + 1) }}
-                      />
-                    }
                     onSave={(patch) => updatePlace(editing, patch)}
                     onCancel={() => {
                       setEditing(null)
                       if (editFromAccount) { setShowAccount(true); setEditFromAccount(false) }
-                    }} />
+                    }}>
+                    <PlacePresence
+                      key={editing.id}
+                      place={editing}
+                      defaultVisibility={profile?.presence_visibility ?? 'friends'}
+                      onFixPin={async (pos) => { await updatePlace(editing, { lat: pos.lat, lng: pos.lng, approximate: false }, false) }}
+                      onMessage={(w) => { setChat({ other_id: w.user_id, first_name: w.first_name, checkin_id: w.checkin_id }); setTab('meet') }}
+                      onChanged={() => { loadRatings(); setMeetKey((k) => k + 1) }}
+                    />
+                  </EditPlace>
                 : <>
                     <ListBar lists={lists} active={activeList} members={members} meId={session.user.id} onSwitch={switchList} onShare={openLists} />
                     <button className="btn primary wide add" onClick={() => setAdding(true)}>＋ Add a place</button>
