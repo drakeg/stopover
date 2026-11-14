@@ -130,6 +130,12 @@ Database: `lists`, `list_members`, `list_invites` (row-level security via helper
 schema); invites go through `invite_info()` / `accept_invite()`; `places.list_id` replaces per-user ownership
 (`places.user_id` now means "added by").
 
+## Privacy and terms
+
+Public pages (no sign-in needed) at `…/stopover/#/privacy` and `…/stopover/#/terms`, linked from sign-in, sign-up and
+Account — use these URLs for Google sign-in branding and app store listings. Text lives in `web/src/components/Legal.tsx`
+(plain-language drafts; have them reviewed, and set a support email in `CONTACT_URL`).
+
 ## Accounts
 
 - Sign up (optional name), sign in, **forgot password** → email link → choose a new password
@@ -149,9 +155,10 @@ schema); invites go through `invite_info()` / `accept_invite()`; `places.list_id
 2. **Redirect URLs.** **Authentication → URL Configuration**: Site URL `https://drakeg.github.io/stopover/`
    and Redirect URL `https://drakeg.github.io/stopover/**` (needed for confirm, reset and email-change links).
 3. **Leaked-password protection.** **Authentication → Sign In / Providers → Email** (may require a paid plan).
-4. **Moderation.** Reviews and "Everyone" check-ins are visible to all users, and strangers can message. Reports land in
-   the `reports` table — someone needs to review them, and there should be a way to suspend accounts. Add a report
-   button on reviews too. Consider push/email notifications for new messages (the app only shows them in-app today).
+4. **Moderation.** Built in: Report on reviews and conversations; admins (rows in `public.admins`, editable only in the
+   Supabase dashboard/SQL) get Account → Moderation to dismiss reports, hide reviews and suspend accounts. Suspended
+   accounts keep their lists but can't post reviews, check in or message, and their reviews/check-ins disappear for
+   others. Still to do: push/email notifications for new messages and new reports.
 5. **Privacy policy and terms.** Needed for the app stores and good practice; the app stores locations people save.
 6. **Map services.** Move off the free OpenStreetMap search/routing/Overpass servers (see Map services above).
    Overpass asks that public apps run their own instance or use a paid places API (Google Places Nearby, Mapbox, Foursquare).

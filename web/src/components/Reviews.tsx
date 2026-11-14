@@ -3,6 +3,7 @@ import {
   deleteReview, myReview, PARKING, placeReviews, saveReview, stars,
   type MyReview, type Parking, type Review, type Summary,
 } from '../lib/reviews'
+import { reportReview } from '../lib/moderation'
 import type { Place } from '../lib/supabase'
 
 const today = () => new Date().toLocaleDateString('en-CA') // yyyy-mm-dd in local time
@@ -167,10 +168,27 @@ export function PlaceReviews({ place, refreshKey, onReview }: { place: Place; re
                 </div>
               )}
               {r.note && <p className="review-note">{r.note}</p>}
+              {r.mine && r.hidden && <p className="muted small">Hidden by a moderator — only you can see this review.</p>}
+              {!r.mine && <ReportLink reviewId={r.id} />}
             </li>
           ))}
         </ul>
       )}
     </section>
+  )
+}
+
+function ReportLink({ reviewId }: { reviewId: string }) {
+  const [state, setState] = useState<'idle' | 'sent' | 'error'>('idle')
+  async function report() {
+    const reason = prompt('What’s wrong with this review? (Sent to the Stopover moderators, not the reviewer.)')
+    if (reason === null) return
+    try { await reportReview(reviewId, reason); setState('sent') } catch { setState('error') }
+  }
+  if (state === 'sent') return <span className="muted small">Reported — thanks.</span>
+  return (
+    <button className="btn link small report-link" onClick={report}>
+      {state === 'error' ? 'Couldn’t report — try again' : 'Report'}
+    </button>
   )
 }

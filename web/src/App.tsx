@@ -5,6 +5,7 @@ import { reverseGeocode } from './lib/geo'
 import { captureInviteFromUrl, ensureLists, loadMembers, memberName, pendingInvite, type List, type Member } from './lib/lists'
 import { Auth, SetNewPassword } from './components/Auth'
 import { Legal, legalPageFromHash, type LegalPage } from './components/Legal'
+import { accountStatus, type AccountStatus } from './lib/moderation'
 import { Account } from './components/Account'
 import { AddPlace } from './components/AddPlace'
 import { EditPlace } from './components/EditPlace'
@@ -49,6 +50,7 @@ export default function App() {
   const [friendInvite, setFriendInvite] = useState<string | null>(() => captureFriendInviteFromUrl())
   const [presence, setPresence] = useState<Record<string, PresenceCount>>({})
   const [legal, setLegal] = useState<LegalPage | null>(() => legalPageFromHash())
+  const [status, setStatus] = useState<AccountStatus | null>(null)
 
   // Privacy / terms pages work signed in or out (…/#/privacy, …/#/terms)
   useEffect(() => {
@@ -75,6 +77,11 @@ export default function App() {
       history.replaceState(null, '', window.location.pathname)
     }
   }, [session])
+
+  useEffect(() => {
+    if (!session) { setStatus(null); return }
+    accountStatus().then(setStatus).catch(() => setStatus(null))
+  }, [session?.user.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!session) return
@@ -349,6 +356,12 @@ export default function App() {
       </nav>
 
       <main className="content">
+        {status?.suspended && (
+          <p className="error banner">
+            Your account is suspended{status.suspended_reason ? ` (${status.suspended_reason})` : ''}. You can still use your lists
+            and plan trips, but you can’t post reviews, check in or send messages.
+          </p>
+        )}
         {toast && <p className="ok banner-ok" onClick={() => setToast(null)}>{toast}</p>}
         {err && <p className="error banner" onClick={() => setErr(null)}>{err}</p>}
 
@@ -384,6 +397,7 @@ export default function App() {
                 onListsChanged={refreshLists}
                 onProfile={setProfile}
                 onClose={() => setShowAccount(false)}
+                isAdmin={status?.is_admin}
                 onEditPlace={(p) => { setEditing(p); setTab('places'); setShowAccount(false); setEditFromAccount(true) }}
               />
             )}

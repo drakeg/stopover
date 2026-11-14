@@ -6,6 +6,7 @@ import { SavedPlaces } from './SavedPlaces'
 import { ListsCard } from './ListsCard'
 import { PrivacyCard } from './PrivacyCard'
 import { LegalLinks } from './Legal'
+import { Moderation } from './Moderation'
 import type { List } from '../lib/lists'
 
 type Msg = { kind: 'ok' | 'error'; text: string } | null
@@ -13,15 +14,25 @@ const Note = ({ msg }: { msg: Msg }) => (msg ? <p className={msg.kind} role="sta
 
 const DETOURS = [5, 10, 25, 50, 100]
 
-export function Account({ user, profile, places, lists, activeListId, onSwitchList, onListsChanged, onProfile, onClose, onEditPlace }: {
+export function Account({ user, profile, places, lists, activeListId, onSwitchList, onListsChanged, onProfile, onClose, onEditPlace, isAdmin }: {
   user: User; profile: Profile; places: Place[]; onProfile: (p: Profile) => void; onClose: () => void
   lists: List[]; activeListId: string | null; onSwitchList: (id: string) => void; onListsChanged: (switchTo?: string) => Promise<void> | void
   onEditPlace: (p: Place) => void
+  isAdmin?: boolean
 }) {
+  const [moderating, setModerating] = useState(false)
+  if (moderating) return <Moderation onClose={() => setModerating(false)} />
   return (
     <>
       <button className="btn link" onClick={onClose}>‹ Back</button>
       <ProfileCard user={user} profile={profile} onProfile={onProfile} />
+      {isAdmin && (
+        <section className="card stack">
+          <h2>Moderation</h2>
+          <p className="muted small">Review reports from travelers, hide reviews and suspend accounts.</p>
+          <button className="btn" onClick={() => setModerating(true)}>Open moderation</button>
+        </section>
+      )}
       <PrivacyCard profile={profile} onProfile={onProfile} />
       <ListsCard userId={user.id} lists={lists} activeId={activeListId} onSwitch={onSwitchList} onChanged={onListsChanged} />
       <SavedPlaces places={places} listName={lists.find((l) => l.id === activeListId)?.name} onEdit={onEditPlace} />

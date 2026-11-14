@@ -19,6 +19,7 @@ export type Review = {
   created_at: string
   reviewer: string
   mine: boolean
+  hidden?: boolean
 }
 
 export type MyReview = {
