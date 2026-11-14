@@ -4,6 +4,7 @@ import { DEFAULT_PROFILE, loadProfile, saveProfile, supabase, type NewPlace, typ
 import { reverseGeocode } from './lib/geo'
 import { captureInviteFromUrl, ensureLists, loadMembers, memberName, pendingInvite, type List, type Member } from './lib/lists'
 import { Auth, SetNewPassword } from './components/Auth'
+import { Legal, legalPageFromHash, type LegalPage } from './components/Legal'
 import { Account } from './components/Account'
 import { AddPlace } from './components/AddPlace'
 import { EditPlace } from './components/EditPlace'
@@ -47,6 +48,14 @@ export default function App() {
   const [meetKey, setMeetKey] = useState(0)
   const [friendInvite, setFriendInvite] = useState<string | null>(() => captureFriendInviteFromUrl())
   const [presence, setPresence] = useState<Record<string, PresenceCount>>({})
+  const [legal, setLegal] = useState<LegalPage | null>(() => legalPageFromHash())
+
+  // Privacy / terms pages work signed in or out (…/#/privacy, …/#/terms)
+  useEffect(() => {
+    const onHash = () => { setLegal(legalPageFromHash()); window.scrollTo(0, 0) }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -307,6 +316,7 @@ export default function App() {
 
   const memberNames = useMemo(() => Object.fromEntries(members.map((m) => [m.user_id, memberName(m)])), [members])
 
+  if (legal) return <Legal page={legal} onBack={() => { history.replaceState(null, '', window.location.pathname + window.location.search); setLegal(null) }} />
   if (session === undefined) return <div className="splash" />
   if (recovering && session)
     return <SetNewPassword onDone={() => { setRecovering(false); setToast('Password updated — you’re signed in.') }} />

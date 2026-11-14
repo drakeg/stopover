@@ -5,6 +5,7 @@ import { friendlyAuthError, MIN_PASSWORD } from './Auth'
 import { SavedPlaces } from './SavedPlaces'
 import { ListsCard } from './ListsCard'
 import { PrivacyCard } from './PrivacyCard'
+import { LegalLinks } from './Legal'
 import type { List } from '../lib/lists'
 
 type Msg = { kind: 'ok' | 'error'; text: string } | null
@@ -31,6 +32,7 @@ export function Account({ user, profile, places, lists, activeListId, onSwitchLi
         <button className="btn wide" onClick={() => supabase.auth.signOut()}>Sign out of Stopover</button>
       </section>
       <DeleteCard email={user.email ?? ''} placeCount={places.length} />
+      <LegalLinks className="center" />
     </>
   )
 }

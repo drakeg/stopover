@@ -235,3 +235,11 @@ a.btn { color: var(--green-2); }
 .bubble.them { align-self: flex-start; background: var(--paper); border-bottom-left-radius: 4px; }
 .bubble-time { font-size: .7rem; opacity: .7; margin-top: .15rem; }
 .chat-send input { flex: 1; }
+
+.legal { max-width: 720px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 1rem) 16px 2rem; }
+.legal article h1 { font-size: 1.6rem; }
+.legal article h2 { font-size: 1.1rem; margin-top: 1.4rem; }
+.legal article ul { padding-left: 1.2rem; }
+.legal article li { margin: .35rem 0; }
+.legal a, .legal-links a { color: var(--green-2); }
+.center { text-align: center; }

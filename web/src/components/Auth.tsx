@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { appUrl, supabase } from '../lib/supabase'
+import { legalHref, LegalLinks } from './Legal'
 
 type Mode = 'in' | 'up' | 'forgot'
 export const MIN_PASSWORD = 8
@@ -87,6 +88,11 @@ export function Auth({ notice }: { notice?: string } = {}) {
             {mode === 'up' && <span className="muted small">At least {MIN_PASSWORD} characters.</span>}
           </label>
         )}
+        {mode === 'up' && (
+          <p className="muted small">
+            By creating an account you agree to the <a href={legalHref('terms')}>Terms</a> and <a href={legalHref('privacy')}>Privacy policy</a>.
+          </p>
+        )}
         {msg && <p className={msg.kind === 'error' ? 'error' : 'ok'} role="status">{msg.text}</p>}
         <button className="btn primary wide" disabled={busy}>
           {busy ? 'One moment…' : mode === 'in' ? 'Sign in' : mode === 'up' ? 'Create account' : 'Send reset link'}
@@ -94,6 +100,7 @@ export function Auth({ notice }: { notice?: string } = {}) {
         {mode === 'in' && <button type="button" className="btn link" onClick={() => switchTo('up')}>New here? Create an account</button>}
         {mode !== 'in' && <button type="button" className="btn link" onClick={() => switchTo('in')}>Back to sign in</button>}
       </form>
+      <LegalLinks className="center" />
     </main>
   )
 }
