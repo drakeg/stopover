@@ -1,0 +1,27 @@
+name: Keep database awake
+
+# Supabase pauses free-plan projects after about a week without activity.
+# One tiny read every 3 days keeps Stopover's database running.
+on:
+  schedule:
+    - cron: '17 9 */3 * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query the database through the public API
+        env:
+          URL: https://bjjfgdxwqzthdjeebbyf.supabase.co/rest/v1/lists?select=id&limit=1
+          # Publishable key: designed to be public (already shipped in the web app); row-level security returns no rows.
+          KEY: sb_publishable_a_TsaqVP0x3-G0VyNemQ4A_ynFuiw0n
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL" -H "apikey: $KEY")
+          echo "Supabase answered HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::Database didn't answer normally (HTTP $code). It may be paused — restore it in the Supabase dashboard."
+            exit 1
+          fi

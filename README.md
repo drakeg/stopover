@@ -147,6 +147,12 @@ Account — use these URLs for Google sign-in branding and app store listings. T
   visited/to-visit, "approximate pins only", sort by newest/oldest/name/state; download the current results as
   **GPX** (Garmin and other GPS apps) or **CSV**. City/state are filled in automatically from each pin.
 
+## Keeping the database awake
+
+Supabase pauses free-plan projects after about a week without activity (the app then can't sign in or load places).
+`.github/workflows/keepalive.yml` makes one tiny read every 3 days to prevent that, and fails loudly if the database
+doesn't answer. If it's ever paused anyway: Supabase dashboard → the project → **Restore**. A paid Supabase plan never pauses.
+
 ## Before opening it to the public
 
 1. **Email sending.** Supabase's built-in email is for testing and only sends a handful of emails per hour.
