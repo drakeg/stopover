@@ -1,10 +1,16 @@
 name: Release
 
-# Pushing a tag like v0.9.0 publishes a GitHub release whose notes are that
-# version's section of RELEASES.md. v0.x releases are marked as pre-releases.
+# Publishes a GitHub release whose notes are that version's section of RELEASES.md
+# (v0.x releases are marked as pre-releases). Either push a tag like v0.9.0, or run
+# this workflow from the Actions tab with the version — it then tags the current main.
 on:
   push:
     tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release (must have a section in RELEASES.md), e.g. v0.9.0
+        required: true
 
 permissions:
   contents: write   # create the release only
@@ -14,10 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: Work out the version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          tag="${INPUT_VERSION:-$GITHUB_REF_NAME}"
+          if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "::error::'$tag' isn't a version like v0.9.0"; exit 1; fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
       - name: Extract notes for this version from RELEASES.md
         id: notes
         run: |
-          tag="${GITHUB_REF_NAME}"
+          tag="$TAG"
           awk -v t="## ${tag} " 'index($0, t) == 1 {grab=1; title=substr($0, 4); next} grab && /^## v/ {exit} grab {print}' RELEASES.md > notes.md
           title=$(grep -m1 "^## ${tag} " RELEASES.md | sed 's/^## //')
           if [ ! -s notes.md ] || [ -z "$title" ]; then
@@ -29,5 +42,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TITLE: ${{ steps.notes.outputs.title }}
         run: |
-          pre=""; case "$GITHUB_REF_NAME" in v0.*) pre="--prerelease";; esac
-          gh release create "$GITHUB_REF_NAME" --title "$TITLE" --notes-file notes.md --verify-tag $pre
+          pre=""; case "$TAG" in v0.*) pre="--prerelease";; esac
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            gh release create "$TAG" --title "$TITLE" --notes-file notes.md --verify-tag $pre
+          else
+            if gh release view "$TAG" >/dev/null 2>&1; then echo "::error::$TAG is already released"; exit 1; fi
+            gh release create "$TAG" --title "$TITLE" --notes-file notes.md --target "$GITHUB_SHA" $pre
+          fi
