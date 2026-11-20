@@ -8,9 +8,9 @@ Use Conventional Commit prefixes as hints, but decide the version by actual user
 
 ## Unreleased
 
-- **Business listings:** owners claim a place, Stopover verifies it, and verified businesses show a ✓ badge, RV facts (rig length, big-rig parking, hookups, pets), an offer and contact details. Owners get a counts-only dashboard. Featured businesses appear, labelled Sponsored, along travelers' planned routes.
+- **Business listings:** owners claim a place, Stopover verifies it, and verified businesses show a ✓ badge, RV facts (rig length, big-rig parking, hookups, pets), an offer and contact details. Owners get a counts-only dashboard and can publicly reply to reviews of their place. Featured businesses appear, labelled Sponsored, along travelers' planned routes.
 
-**Migrations:** `20261120150000_businesses.sql` (applied to production Nov 20 2026; RLS tests in `supabase/tests/businesses_rls.sql`).
+**Migrations:** `20261120150000_businesses.sql` (applied to production Nov 20 2026; RLS tests in `supabase/tests/businesses_rls.sql`), `20261120180000_review_replies.sql` (tests in `supabase/tests/review_replies_rls.sql`).
 
 ## v0.9.0 — Beta (Nov 20 2026)
 

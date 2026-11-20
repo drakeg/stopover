@@ -20,6 +20,10 @@ export type Review = {
   reviewer: string
   mine: boolean
   hidden?: boolean
+  reply?: string | null
+  reply_at?: string | null
+  reply_from?: string | null
+  can_reply?: boolean
 }
 
 export type MyReview = {
@@ -105,3 +109,9 @@ export async function syncReviewToPlace(place: Place) {
 }
 
 export const stars = (n: number) => '★★★★★'.slice(0, Math.round(n)) + '☆☆☆☆☆'.slice(0, 5 - Math.round(n))
+
+/** A verified business owner's public reply to a review of their place (empty text removes it). */
+export async function replyToReview(reviewId: string, reply: string) {
+  const { error } = await supabase.rpc('reply_to_review', { p_review: reviewId, p_reply: reply })
+  if (error) throw new Error(error.message)
+}

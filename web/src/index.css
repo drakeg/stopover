@@ -266,3 +266,6 @@ a.btn { color: var(--green-2); }
 .stops.plain { list-style: none; padding-left: 0; }
 .stops.plain li { display: flex; gap: .5rem; align-items: flex-start; padding: .5rem 0; }
 .stops.plain li::before { content: none; }
+.owner-reply { margin: .4rem 0 .2rem .9rem; padding: .45rem .65rem; border-left: 3px solid #1f5fa8; background: #f3f7fc; border-radius: 0 8px 8px 0; }
+.owner-reply .review-note { margin: .2rem 0 0; }
+.owner-reply textarea { width: 100%; }
