@@ -21,7 +21,7 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 26
@@ -39,9 +39,9 @@ jobs:
     name: Repository standards
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check out Mad Mallard standards toolkit (pinned)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: drakeg/madmallard-repository-standards
           ref: 5c43391e7a6860cf9691b45758ee9003f9f0222f
@@ -57,7 +57,7 @@ jobs:
     name: Docker Compose serves the app
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Start dev server and production preview
         run: docker compose --profile preview up -d --build web preview
       - name: Both answer with the app
