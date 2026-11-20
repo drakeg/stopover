@@ -2,11 +2,11 @@
 
 Stopover uses [Semantic Versioning](https://semver.org/). Until `v1.0.0` (public launch with paying customers and app-store builds) versions are `v0.x.y`: **minor** for new features, **patch** for fixes. Every merge to `main` deploys to GitHub Pages; a **release** is a tagged, documented checkpoint — not every merge.
 
-**Release checklist:** CI green on `main`; database migrations applied and RLS-tested; deployed site checked; README badges verified; SPRINTS/BACKLOG updated; notes below written; tag `vX.Y.Z` and publish a GitHub release with the same notes. Security fixes may get an expedited patch release.
+**Release checklist:** CI green on `main`; database migrations applied and RLS-tested; deployed site checked; README badges verified; SPRINTS/BACKLOG updated; notes below written; then push tag `vX.Y.Z` **or** run Actions → Release with the version — the workflow publishes the GitHub release with these notes. Security fixes may get an expedited patch release.
 
 Use Conventional Commit prefixes as hints, but decide the version by actual user-visible impact.
 
-## v0.9.0 — Beta (Nov 19 2026)
+## v0.9.0 — Beta (Nov 20 2026)
 
 First tagged release, covering Sprints 1–9.
 
