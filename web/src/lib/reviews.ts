@@ -115,3 +115,9 @@ export async function replyToReview(reviewId: string, reply: string) {
   const { error } = await supabase.rpc('reply_to_review', { p_review: reviewId, p_reply: reply })
   if (error) throw new Error(error.message)
 }
+
+/** Moderators: hide (or restore) a business owner's reply. */
+export async function setReplyHidden(reviewId: string, hidden: boolean) {
+  const { error } = await supabase.rpc('admin_set_reply_hidden', { p_review: reviewId, p_hidden: hidden })
+  if (error) throw new Error(error.message)
+}
