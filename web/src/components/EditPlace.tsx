@@ -3,6 +3,7 @@ import { directionsUrl, reverseGeocode, type LatLng } from '../lib/geo'
 import { CATEGORIES, type Place, type PlacePatch } from '../lib/supabase'
 import type { List } from '../lib/lists'
 import { PlaceReviews } from './Reviews'
+import { PlaceBusiness } from './Business'
 import { LocationSearch } from './LocationSearch'
 import { MapView } from './MapView'
 
@@ -109,6 +110,7 @@ export function EditPlace({ place, lists = [], addedBy, reviewsKey, onReview, on
         </div>
       </form>
     </section>
+    <PlaceBusiness key={place.id} place={place} />
     <PlaceReviews place={place} refreshKey={reviewsKey} onReview={onReview} />
     </>
   )

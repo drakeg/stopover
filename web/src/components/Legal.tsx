@@ -6,7 +6,7 @@
  * Plain-language drafts — have them reviewed before a public launch.
  */
 
-export const LEGAL_UPDATED = 'November 14, 2026'
+export const LEGAL_UPDATED = 'November 20, 2026'
 // TODO: replace with a dedicated support email address before launch
 export const CONTACT_URL = 'https://github.com/drakeg/stopover/issues'
 
@@ -61,6 +61,9 @@ function Privacy() {
         <li><strong>Your places and trips</strong> are private to you and anyone you invite to a shared list.</li>
         <li><strong>Reviews</strong> are visible to all Stopover users, shown with your first name only. Reviews of places whose pin
           was saved from the road stay private until the pin is moved to the place itself.</li>
+        <li><strong>Business listings:</strong> once Stopover verifies a claim, the business’s name, details, offer, website and phone
+          are public to Stopover users. Claim details (your role and notes) are seen only by you and Stopover staff. Businesses see
+          only totals — how many travelers saved, plan to visit or reviewed them — never who.</li>
         <li><strong>Check-ins</strong> are visible to the people you choose for each one: no one, your friends, or everyone. Others
           see your first name, rig, the place, when, and any note — never your live location, last name or email.</li>
         <li><strong>Messages</strong> are visible only to you and the person you’re talking with (and to our moderators if one of you

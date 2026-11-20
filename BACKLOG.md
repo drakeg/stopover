@@ -5,11 +5,11 @@ Priorities: **P0** blocks the next paying customer or a safe launch · **P1** hi
 | Priority | Item | Why | Target | Status |
 | --- | --- | --- | --- | --- |
 | P0 | CI on PRs, standards docs, badges, Docker/LAN testing | Reviewable, tested changes | Sprint 9 | In PR |
-| P0 | Business claim + approval flow | First thing a paying SMB needs | Sprint 10 | Planned |
-| P0 | Business profile with RV facts + offer; verified badge | Core value for campgrounds/attractions | Sprint 10 | Planned |
-| P0 | "Featured along your route" (labelled) in trip planner | What businesses pay for: travelers headed their way | Sprint 10 | Planned |
+| P0 | Business claim + approval flow | First thing a paying SMB needs | Sprint 10 | Done (#27) |
+| P0 | Business profile with RV facts + offer; verified badge | Core value for campgrounds/attractions | Sprint 10 | Done (#27) |
+| P0 | "Featured along your route" (labelled) in trip planner | What businesses pay for: travelers headed their way | Sprint 10 | Done (#27) |
 | P0 | Payment via hosted checkout link | Get paid without building billing | Sprint 10 | **Blocked: needs Stripe account + price decision** |
-| P1 | Business dashboard (saves, plans, check-ins counts) | Shows ROI → renewals | Sprint 10 | Planned |
+| P1 | Business dashboard (saves, plans, check-ins counts) | Shows ROI → renewals | Sprint 10 | Done (#27) |
 | P1 | Owner replies to reviews | Businesses expect it | Sprint 10 | Planned |
 | P1 | Email/web-push notifications (messages, plans, reports, replies) | Messages and reports go unseen today | Sprint 11 | Planned |
 | P1 | Custom SMTP + support email address | Supabase built-in email is rate-limited; legal pages need contact | Sprint 12 | Blocked: needs email provider/address |
