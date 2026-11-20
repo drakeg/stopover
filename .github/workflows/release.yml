@@ -1,0 +1,33 @@
+name: Release
+
+# Pushing a tag like v0.9.0 publishes a GitHub release whose notes are that
+# version's section of RELEASES.md. v0.x releases are marked as pre-releases.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write   # create the release only
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract notes for this version from RELEASES.md
+        id: notes
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          awk -v t="## ${tag} " 'index($0, t) == 1 {grab=1; title=substr($0, 4); next} grab && /^## v/ {exit} grab {print}' RELEASES.md > notes.md
+          title=$(grep -m1 "^## ${tag} " RELEASES.md | sed 's/^## //')
+          if [ ! -s notes.md ] || [ -z "$title" ]; then
+            echo "::error::RELEASES.md has no '## ${tag} …' section — add release notes before tagging."; exit 1
+          fi
+          echo "title=$title" >> "$GITHUB_OUTPUT"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ steps.notes.outputs.title }}
+        run: |
+          pre=""; case "$GITHUB_REF_NAME" in v0.*) pre="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" --title "$TITLE" --notes-file notes.md --verify-tag $pre
