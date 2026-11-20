@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:lan": "vite --host 0.0.0.0 --port 5173 --strictPort",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
     "cap:sync": "npm run build && cap sync",
     "ios": "npm run cap:sync && cap open ios",
-    "android": "npm run cap:sync && cap open android"
+    "android": "npm run cap:sync && cap open android",
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "@capacitor/core": "^8.6.0",

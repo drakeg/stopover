@@ -1,5 +1,16 @@
 # Stopover
 
+<!-- madmallard-badges:start -->
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?logo=docker&logoColor=white)
+
+[![ci](https://github.com/drakeg/stopover/actions/workflows/ci.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/ci.yml) [![deploy](https://github.com/drakeg/stopover/actions/workflows/deploy.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/deploy.yml) [![keepalive](https://github.com/drakeg/stopover/actions/workflows/keepalive.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/keepalive.yml) [![release](https://github.com/drakeg/stopover/actions/workflows/release.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/release.yml) [![Issues](https://img.shields.io/github/issues/drakeg/stopover)](https://github.com/drakeg/stopover/issues) [![Pull requests](https://img.shields.io/github/issues-pr/drakeg/stopover)](https://github.com/drakeg/stopover/pulls)
+<!-- madmallard-badges:end -->
+
+<!-- stopover-badges: project-specific, maintained by hand (see AGENTS.md) -->
+![React](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/react?filename=web%2Fpackage.json&label=React&logo=react&logoColor=white&color=149eca) ![TypeScript](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/dev/typescript?filename=web%2Fpackage.json&label=TypeScript&logo=typescript&logoColor=white&color=3178c6) ![Vite](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/dev/vite?filename=web%2Fpackage.json&label=Vite&logo=vite&logoColor=white&color=646cff) ![Supabase%20JS](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/@supabase/supabase-js?filename=web%2Fpackage.json&label=Supabase%20JS&logo=supabase&logoColor=white&color=3ecf8e) ![Leaflet](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/leaflet?filename=web%2Fpackage.json&label=Leaflet&logo=leaflet&logoColor=white&color=199900) ![Capacitor](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/@capacitor/core?filename=web%2Fpackage.json&label=Capacitor&logo=capacitor&logoColor=white&color=119eff) ![Vitest](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/dev/vitest?filename=web%2Fpackage.json&label=Vitest&logo=vitest&logoColor=white&color=6e9f18) ![Node.js 26](https://img.shields.io/badge/Node.js-26-5fa04e?logo=nodedotjs&logoColor=white) ![PostgreSQL RLS](https://img.shields.io/badge/PostgreSQL-row--level%20security-4169e1?logo=postgresql&logoColor=white)
+
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fdrakeg.github.io%2Fstopover%2F&label=drakeg.github.io%2Fstopover)](https://drakeg.github.io/stopover/) [![Renovate](https://img.shields.io/badge/dependencies-Renovate-1a1f6c?logo=renovatebot&logoColor=white)](https://github.com/drakeg/stopover/pulls?q=author%3Aapp%2Frenovate) [![Last commit](https://img.shields.io/github/last-commit/drakeg/stopover)](https://github.com/drakeg/stopover/commits/main) [![Commit activity](https://img.shields.io/github/commit-activity/m/drakeg/stopover)](https://github.com/drakeg/stopover/pulse)
+
 Save the places you drive past. Find them again when you're headed that way.
 
 - **Save a place** three ways: where you are right now (GPS), by search, or by tapping the map. Add a type and notes ("check RV parking").
@@ -8,6 +19,10 @@ Save the places you drive past. Find them again when you're headed that way.
 - **Save trips** to pull up again later.
 
 One codebase runs as a website, installs to a phone home screen, and builds into native iPhone and Android apps with Capacitor.
+
+## Project docs
+
+[Sprints](SPRINTS.md) · [Backlog](BACKLOG.md) · [Releases](RELEASES.md) · [Contributing](CONTRIBUTING.md) · [Agent instructions](AGENTS.md) · [Security](SECURITY.md)
 
 ## Layout
 
@@ -21,6 +36,9 @@ supabase/migrations/ database schema and row-level security
 ```
 
 ## Run it
+
+**On your network (test on a phone on the same Wi-Fi):** `docker compose up` from the repo root, or `cd web && npm run dev:lan`, then open `http://<this-computer's-IP>:5173`. `docker compose --profile preview up preview` serves the production build on :4173.
+
 
 ```bash
 cd web
@@ -146,6 +164,12 @@ Account — use these URLs for Google sign-in branding and app store listings. T
 - **Saved places list** on the Account page: search (names, notes, towns, exits), filter by state, type and
   visited/to-visit, "approximate pins only", sort by newest/oldest/name/state; download the current results as
   **GPX** (Garmin and other GPS apps) or **CSV**. City/state are filled in automatically from each pin.
+
+## Keeping the database awake
+
+Supabase pauses free-plan projects after about a week without activity (the app then can't sign in or load places).
+`.github/workflows/keepalive.yml` makes one tiny read every 3 days to prevent that, and fails loudly if the database
+doesn't answer. If it's ever paused anyway: Supabase dashboard → the project → **Restore**. A paid Supabase plan never pauses.
 
 ## Before opening it to the public
 
