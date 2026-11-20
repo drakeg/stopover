@@ -3,6 +3,7 @@ import {
   adminReports, adminSuspended, resolveReport, setReviewHidden, unsuspend,
   type AdminReport, type ResolveAction, type Suspended,
 } from '../lib/moderation'
+import { BusinessAdmin } from './Business'
 
 const fmt = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''
@@ -107,6 +108,8 @@ export function Moderation({ onClose }: { onClose: () => void }) {
         </ul>
         <p className="muted small">Reports also arrive from conversations (Report in the ••• menu) and from reviews.</p>
       </section>
+
+      <BusinessAdmin />
     </>
   )
 }

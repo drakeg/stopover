@@ -250,3 +250,19 @@ a.btn { color: var(--green-2); }
 .report-head { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .report-content { margin: 0; padding: .4rem .6rem; border-left: 3px solid var(--line); background: var(--paper); border-radius: 0 6px 6px 0; white-space: pre-wrap; }
 .danger-tag { background: #fee2e2; color: var(--danger); }
+
+/* Business listings */
+.tag.verified { background: #e6f0fb; color: #1f5fa8; }
+.business h3 { margin: 0; }
+.offer { background: #fff7e0; border: 1px solid #f1dc9c; border-radius: 8px; padding: .5rem .65rem; margin: 0; font-weight: 600; }
+.business-details p { margin: 0; }
+.owned-business + .owned-business { border-top: 1px solid var(--line, #e5e5e5); padding-top: .75rem; }
+.stats { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; text-align: center; }
+.stats li { background: var(--paper); border-radius: 8px; padding: .5rem .25rem; display: flex; flex-direction: column; }
+.stats strong { font-size: 1.25rem; }
+.stats span { font-size: .7rem; color: var(--muted, #666); }
+.featured { border: 1px solid #f1dc9c; }
+.featured h3 { margin: 0; }
+.stops.plain { list-style: none; padding-left: 0; }
+.stops.plain li { display: flex; gap: .5rem; align-items: flex-start; padding: .5rem 0; }
+.stops.plain li::before { content: none; }

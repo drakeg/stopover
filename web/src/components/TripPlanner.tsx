@@ -8,6 +8,7 @@ import { supabase, type Place, type Trip } from '../lib/supabase'
 import { LocationSearch } from './LocationSearch'
 import { MapView, type MapPin } from './MapView'
 import { StarSummary } from './Reviews'
+import { FeaturedAlongRoute } from './Business'
 import type { Summary } from '../lib/reviews'
 
 const DETOURS = [5, 10, 25, 50, 100]
@@ -59,6 +60,7 @@ export function TripPlanner({ places, trips, onTripsChanged, defaultDetour = 25,
     () => (route ? stopsAlongRoute(places, route.coords, detour) : []),
     [route, places, detour],
   )
+  const stopPoints = useMemo(() => stops.map((s) => ({ lat: s.place.lat, lng: s.place.lng })), [stops])
   const chosen = stops.filter((s) => !skipped.has(s.place.id))
   const legsFor = (app: MapsApp) => start && end && route
     ? tripLinks(start, chosen.map((s) => ({ lat: s.place.lat, lng: s.place.lng, name: s.place.name })), end, app)
@@ -208,6 +210,7 @@ export function TripPlanner({ places, trips, onTripsChanged, defaultDetour = 25,
           <p className="muted small">“Off route” is straight-line distance; the actual side trip by road will be a bit longer.</p>
         </section>
       )}
+      {route && <FeaturedAlongRoute coords={route.coords} maxMi={detour} skipNear={stopPoints} />}
     </>
   )
 }

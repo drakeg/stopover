@@ -9,7 +9,7 @@
 <!-- stopover-badges: project-specific, maintained by hand (see AGENTS.md) -->
 ![React](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/react?filename=web%2Fpackage.json&label=React&logo=react&logoColor=white&color=149eca) ![TypeScript](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/dev/typescript?filename=web%2Fpackage.json&label=TypeScript&logo=typescript&logoColor=white&color=3178c6) ![Vite](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/dev/vite?filename=web%2Fpackage.json&label=Vite&logo=vite&logoColor=white&color=646cff) ![Supabase%20JS](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/@supabase/supabase-js?filename=web%2Fpackage.json&label=Supabase%20JS&logo=supabase&logoColor=white&color=3ecf8e) ![Leaflet](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/leaflet?filename=web%2Fpackage.json&label=Leaflet&logo=leaflet&logoColor=white&color=199900) ![Capacitor](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/@capacitor/core?filename=web%2Fpackage.json&label=Capacitor&logo=capacitor&logoColor=white&color=119eff) ![Vitest](https://img.shields.io/github/package-json/dependency-version/drakeg/stopover/dev/vitest?filename=web%2Fpackage.json&label=Vitest&logo=vitest&logoColor=white&color=6e9f18) ![Node.js 26](https://img.shields.io/badge/Node.js-26-5fa04e?logo=nodedotjs&logoColor=white) ![PostgreSQL RLS](https://img.shields.io/badge/PostgreSQL-row--level%20security-4169e1?logo=postgresql&logoColor=white)
 
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fdrakeg.github.io%2Fstopover%2F&label=drakeg.github.io%2Fstopover)](https://drakeg.github.io/stopover/) [![Renovate](https://img.shields.io/badge/dependencies-Renovate-1a1f6c?logo=renovatebot&logoColor=white)](https://github.com/drakeg/stopover/pulls?q=author%3Aapp%2Frenovate) [![Last commit](https://img.shields.io/github/last-commit/drakeg/stopover)](https://github.com/drakeg/stopover/commits/main) [![Commit activity](https://img.shields.io/github/commit-activity/m/drakeg/stopover)](https://github.com/drakeg/stopover/pulse)
+[![Release](https://img.shields.io/github/v/release/drakeg/stopover?include_prereleases&sort=semver&logo=github)](https://github.com/drakeg/stopover/releases) [![Website](https://img.shields.io/website?url=https%3A%2F%2Fdrakeg.github.io%2Fstopover%2F&label=drakeg.github.io%2Fstopover)](https://drakeg.github.io/stopover/) [![Renovate](https://img.shields.io/badge/dependencies-Renovate-1a1f6c?logo=renovatebot&logoColor=white)](https://github.com/drakeg/stopover/pulls?q=author%3Aapp%2Frenovate) [![Last commit](https://img.shields.io/github/last-commit/drakeg/stopover)](https://github.com/drakeg/stopover/commits/main) [![Commit activity](https://img.shields.io/github/commit-activity/m/drakeg/stopover)](https://github.com/drakeg/stopover/pulse)
 
 Save the places you drive past. Find them again when you're headed that way.
 
@@ -130,6 +130,16 @@ the drive-time server is down. Opens in Google or Apple Maps, split into parts i
 - **Meet up tab**: messages, your check-ins, friends' plans (here now / coming up), friends and invites.
 - DB: `checkins`, `friendships`, `friend_invites`, `blocks`, `messages`, `reports`; others' check-ins only via
   `who_is_at()`, `presence_summaries()`, `friends_plans()`.
+
+## Business listings
+
+A campground, diner or attraction can **claim its place**. Open the place and tap **Claim it**. Claims arrive under Account → Moderation → Business claims, where an admin verifies them, ideally by calling the business's publicly listed number. Once verified, a listing:
+
+- Shows a ✓ badge on the place, with RV facts (longest rig, big-rig parking, hookups, pets), an offer, a website and a phone number.
+- Gives the owner a counts-only dashboard under Account → My business: how many travelers saved the place, plan to visit, are there now, and reviewed it. Owners never see who.
+- Can be set as **Featured** for N days by an admin (the paid plan). Featured businesses within a trip's detour distance appear under "Featured along your route", always labelled *Sponsored*.
+
+Payment is manual for now; a hosted checkout link is next once a Stripe account and a price are chosen.
 
 ## Shared lists
 

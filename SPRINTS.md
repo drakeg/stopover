@@ -41,19 +41,20 @@ Security/dependency PRs reviewed and merged, privacy policy and terms pages, mod
 - [x] CI on every PR (lint, type-check, tests, build, standards audit, badge check)
 - [x] README badges (generated + verified)
 - [x] Docker Compose + `npm run dev:lan` for phone testing on the local network
-- [ ] First tagged release `v0.9.0` with release notes (after merge)
+- [x] First tagged release [`v0.9.0`](https://github.com/drakeg/stopover/releases/tag/v0.9.0) with release notes
 **Acceptance:** CI green on the PR; audit reports nothing missing; badge check clean; `docker compose up` serves the app on the LAN.
 
 ## Planned
 
-### Sprint 10 — Business listings MVP (SMB) — next
+### Sprint 10 — Business listings MVP (SMB) — in progress
 **Goal:** The fastest realistic path to a first paying customer: let a campground or attraction **claim its place** and show up for RVers whose trips pass nearby.
-- Business claim request (from any place) → admin approves in Moderation
-- Business profile: description, RV-specific facts (max length, big-rig parking, hookups, pet policy), website/phone, an offer ("10% off for Stopover travelers")
-- Verified-business badge on the place; owner can reply to reviews
-- "Featured along your route" in the trip planner for claimed businesses within the detour distance (clearly labelled)
-- Simple dashboard: how many travelers saved, planned or checked in at the business
-- Payment via a hosted checkout link (no billing code) — **needs the owner's Stripe account**
+- [x] Business claim request (from any place) → admin verifies or rejects in Moderation
+- [x] Business profile: description, RV-specific facts (max length, big-rig parking, hookups, pet policy), website/phone, an offer ("10% off for Stopover travelers")
+- [x] Verified-business badge on the place
+- [ ] Owner can reply to reviews
+- [x] "Featured along your route" in the trip planner for featured businesses within the detour distance (labelled Sponsored); admins set Featured for N days
+- [x] Simple dashboard: how many travelers saved, plan to visit, are here now, and reviews (counts only)
+- [ ] Payment via a hosted checkout link (no billing code) — **blocked: needs the owner's Stripe account + price**
 **Acceptance:** A real business can be claimed, approved, edited and featured end-to-end; travelers can always tell featured results from organic ones; no traveler data beyond counts is exposed to businesses.
 
 ### Sprint 11 — Notifications

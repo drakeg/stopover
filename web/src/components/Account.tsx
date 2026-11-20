@@ -7,6 +7,7 @@ import { ListsCard } from './ListsCard'
 import { PrivacyCard } from './PrivacyCard'
 import { LegalLinks } from './Legal'
 import { Moderation } from './Moderation'
+import { MyBusinessCard } from './Business'
 import type { List } from '../lib/lists'
 
 type Msg = { kind: 'ok' | 'error'; text: string } | null
@@ -29,10 +30,11 @@ export function Account({ user, profile, places, lists, activeListId, onSwitchLi
       {isAdmin && (
         <section className="card stack">
           <h2>Moderation</h2>
-          <p className="muted small">Review reports from travelers, hide reviews and suspend accounts.</p>
+          <p className="muted small">Review reports and business claims, hide reviews, suspend accounts and manage Featured listings.</p>
           <button className="btn" onClick={() => setModerating(true)}>Open moderation</button>
         </section>
       )}
+      <MyBusinessCard />
       <PrivacyCard profile={profile} onProfile={onProfile} />
       <ListsCard userId={user.id} lists={lists} activeId={activeListId} onSwitch={onSwitchList} onChanged={onListsChanged} />
       <SavedPlaces places={places} listName={lists.find((l) => l.id === activeListId)?.name} onEdit={onEditPlace} />

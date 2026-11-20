@@ -6,6 +6,12 @@ Stopover uses [Semantic Versioning](https://semver.org/). Until `v1.0.0` (public
 
 Use Conventional Commit prefixes as hints, but decide the version by actual user-visible impact.
 
+## Unreleased
+
+- **Business listings:** owners claim a place, Stopover verifies it, and verified businesses show a ✓ badge, RV facts (rig length, big-rig parking, hookups, pets), an offer and contact details. Owners get a counts-only dashboard. Featured businesses appear, labelled Sponsored, along travelers' planned routes.
+
+**Migrations:** `20261120150000_businesses.sql` (applied to production Nov 20 2026; RLS tests in `supabase/tests/businesses_rls.sql`).
+
 ## v0.9.0 — Beta (Nov 20 2026)
 
 First tagged release, covering Sprints 1–9.
