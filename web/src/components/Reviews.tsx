@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  deleteReview, myReview, PARKING, placeReviews, replyToReview, saveReview, stars,
+  deleteReview, myReview, PARKING, placeReviews, replyToReview, saveReview, setReplyHidden, stars,
   type MyReview, type Parking, type Review, type Summary,
 } from '../lib/reviews'
 import { reportReview } from '../lib/moderation'
@@ -126,7 +126,7 @@ export function ReviewSheet({ place, onClose }: {
 }
 
 /** What other travelers said about this place. */
-export function PlaceReviews({ place, refreshKey, onReview }: { place: Place; refreshKey?: number; onReview?: () => void }) {
+export function PlaceReviews({ place, refreshKey, onReview, isAdmin }: { place: Place; refreshKey?: number; onReview?: () => void; isAdmin?: boolean }) {
   const [reviews, setReviews] = useState<Review[] | null>(null)
   const [err, setErr] = useState(false)
 
@@ -169,7 +169,7 @@ export function PlaceReviews({ place, refreshKey, onReview }: { place: Place; re
               )}
               {r.note && <p className="review-note">{r.note}</p>}
               {r.mine && r.hidden && <p className="muted small">Hidden by a moderator — only you can see this review.</p>}
-              <OwnerReply review={r} onChanged={(reply) => setReviews((all) => all?.map((x) => x.id === r.id
+              <OwnerReply review={r} isAdmin={isAdmin} onChanged={(reply) => setReviews((all) => all?.map((x) => x.id === r.id
                 ? { ...x, reply: reply || null, reply_at: reply ? new Date().toISOString() : null, reply_from: reply ? (x.reply_from ?? 'You') : null }
                 : x) ?? null)} />
               {!r.mine && <ReportLink reviewId={r.id} />}
@@ -182,7 +182,7 @@ export function PlaceReviews({ place, refreshKey, onReview }: { place: Place; re
 }
 
 /** The business's public reply, and for the verified owner a way to write or edit it. */
-function OwnerReply({ review: r, onChanged }: { review: Review; onChanged: (reply: string) => void }) {
+function OwnerReply({ review: r, isAdmin, onChanged }: { review: Review; isAdmin?: boolean; onChanged: (reply: string) => void }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(r.reply ?? '')
   const [busy, setBusy] = useState(false)
@@ -215,6 +215,14 @@ function OwnerReply({ review: r, onChanged }: { review: Review; onChanged: (repl
           <p className="review-note">{r.reply}</p>
         </div>
       )}
+      {isAdmin && r.reply && !r.can_reply && (
+        <button className="btn link small" disabled={busy} onClick={async () => {
+          if (!confirm(`Hide ${r.reply_from}’s reply? Travelers will no longer see it; the owner can’t un-hide it.`)) return
+          setBusy(true)
+          try { await setReplyHidden(r.id, true); onChanged('') } catch (e) { setErr(e instanceof Error ? e.message : String(e)) } finally { setBusy(false) }
+        }}>Hide reply (moderator)</button>
+      )}
+      {err && !editing && <p className="error">{err}</p>}
       {r.can_reply && <button className="btn link small" onClick={() => setEditing(true)}>{r.reply ? 'Edit your reply' : 'Reply as the owner'}</button>}
     </>
   )
@@ -223,7 +231,7 @@ function OwnerReply({ review: r, onChanged }: { review: Review; onChanged: (repl
 function ReportLink({ reviewId }: { reviewId: string }) {
   const [state, setState] = useState<'idle' | 'sent' | 'error'>('idle')
   async function report() {
-    const reason = prompt('What’s wrong with this review? (Sent to the Stopover moderators, not the reviewer.)')
+    const reason = prompt('What’s wrong with this review or the owner’s reply? (Sent to the Stopover moderators, not the reviewer.)')
     if (reason === null) return
     try { await reportReview(reviewId, reason); setState('sent') } catch { setState('error') }
   }

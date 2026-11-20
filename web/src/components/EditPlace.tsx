@@ -8,8 +8,8 @@ import { LocationSearch } from './LocationSearch'
 import { MapView } from './MapView'
 
 /** Tidy up a place later: rename, add details, move the pin to the exact spot. */
-export function EditPlace({ place, lists = [], addedBy, reviewsKey, onReview, onSave, onCancel, children }: {
-  place: Place; lists?: List[]; addedBy?: string; reviewsKey?: number; onReview?: () => void; children?: React.ReactNode
+export function EditPlace({ place, lists = [], addedBy, reviewsKey, onReview, onSave, onCancel, children, isAdmin }: {
+  place: Place; lists?: List[]; addedBy?: string; reviewsKey?: number; onReview?: () => void; children?: React.ReactNode; isAdmin?: boolean
   onSave: (patch: PlacePatch) => Promise<void>; onCancel: () => void
 }) {
   const [spot, setSpot] = useState<LatLng>({ lat: place.lat, lng: place.lng })
@@ -111,7 +111,7 @@ export function EditPlace({ place, lists = [], addedBy, reviewsKey, onReview, on
       </form>
     </section>
     <PlaceBusiness key={place.id} place={place} />
-    <PlaceReviews place={place} refreshKey={reviewsKey} onReview={onReview} />
+    <PlaceReviews place={place} refreshKey={reviewsKey} onReview={onReview} isAdmin={isAdmin} />
     </>
   )
 }

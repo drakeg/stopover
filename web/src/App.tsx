@@ -412,6 +412,7 @@ export default function App() {
                     lists={lists}
                     addedBy={editing.user_id && editing.user_id !== session.user.id ? memberNames[editing.user_id] : undefined}
                     reviewsKey={reviewsKey}
+                    isAdmin={status?.is_admin}
                     onReview={() => setReviewing(editing)}
                     onSave={(patch) => updatePlace(editing, patch)}
                     onCancel={() => {
