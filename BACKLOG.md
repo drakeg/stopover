@@ -10,7 +10,8 @@ Priorities: **P0** blocks the next paying customer or a safe launch · **P1** hi
 | P0 | "Featured along your route" (labelled) in trip planner | What businesses pay for: travelers headed their way | Sprint 10 | Done (#27) |
 | P0 | Payment via hosted checkout link | Get paid without building billing | Sprint 10 | **Blocked: needs Stripe account + price decision** |
 | P1 | Business dashboard (saves, plans, check-ins counts) | Shows ROI → renewals | Sprint 10 | Done (#27) |
-| P1 | Owner replies to reviews | Businesses expect it | Sprint 10 | Planned |
+| P2 | Admin UI to hide an owner reply (RPC `admin_set_reply_hidden` exists) + report-a-reply | Moderation completeness | Sprint 11 | Planned |
+| P1 | Owner replies to reviews | Businesses expect it | Sprint 10 | Done (#28) |
 | P1 | Email/web-push notifications (messages, plans, reports, replies) | Messages and reports go unseen today | Sprint 11 | Planned |
 | P1 | Custom SMTP + support email address | Supabase built-in email is rate-limited; legal pages need contact | Sprint 12 | Blocked: needs email provider/address |
 | P1 | Paid geocoding/places provider via Edge Function | Free OSM services aren't for public apps | Sprint 12 | Planned |

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  deleteReview, myReview, PARKING, placeReviews, saveReview, stars,
+  deleteReview, myReview, PARKING, placeReviews, replyToReview, saveReview, stars,
   type MyReview, type Parking, type Review, type Summary,
 } from '../lib/reviews'
 import { reportReview } from '../lib/moderation'
@@ -169,12 +169,54 @@ export function PlaceReviews({ place, refreshKey, onReview }: { place: Place; re
               )}
               {r.note && <p className="review-note">{r.note}</p>}
               {r.mine && r.hidden && <p className="muted small">Hidden by a moderator — only you can see this review.</p>}
+              <OwnerReply review={r} onChanged={(reply) => setReviews((all) => all?.map((x) => x.id === r.id
+                ? { ...x, reply: reply || null, reply_at: reply ? new Date().toISOString() : null, reply_from: reply ? (x.reply_from ?? 'You') : null }
+                : x) ?? null)} />
               {!r.mine && <ReportLink reviewId={r.id} />}
             </li>
           ))}
         </ul>
       )}
     </section>
+  )
+}
+
+/** The business's public reply, and for the verified owner a way to write or edit it. */
+function OwnerReply({ review: r, onChanged }: { review: Review; onChanged: (reply: string) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState(r.reply ?? '')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  async function save(value: string) {
+    setBusy(true); setErr(null)
+    try { await replyToReview(r.id, value); onChanged(value.trim()); setEditing(false) }
+    catch (e) { setErr(e instanceof Error ? e.message : String(e)) } finally { setBusy(false) }
+  }
+  if (editing) {
+    return (
+      <div className="owner-reply stack">
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={500}
+          placeholder="Thank them, or say what you’ve changed. Everyone on Stopover can read this." />
+        {err && <p className="error">{err}</p>}
+        <div className="row wrap">
+          <button className="btn small" onClick={() => { setEditing(false); setText(r.reply ?? '') }}>Cancel</button>
+          {r.reply && <button className="btn small danger" disabled={busy} onClick={() => save('')}>Delete reply</button>}
+          <button className="btn small primary" disabled={busy || !text.trim()} onClick={() => save(text)}>Post reply</button>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <>
+      {r.reply && (
+        <div className="owner-reply">
+          <div className="small"><strong>{r.reply_from}</strong> <span className="tag verified">Owner</span>{' '}
+            <span className="muted">{fmt(r.reply_at ?? null)}</span></div>
+          <p className="review-note">{r.reply}</p>
+        </div>
+      )}
+      {r.can_reply && <button className="btn link small" onClick={() => setEditing(true)}>{r.reply ? 'Edit your reply' : 'Reply as the owner'}</button>}
+    </>
   )
 }
 

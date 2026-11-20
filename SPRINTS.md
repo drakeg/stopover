@@ -51,7 +51,7 @@ Security/dependency PRs reviewed and merged, privacy policy and terms pages, mod
 - [x] Business claim request (from any place) → admin verifies or rejects in Moderation
 - [x] Business profile: description, RV-specific facts (max length, big-rig parking, hookups, pet policy), website/phone, an offer ("10% off for Stopover travelers")
 - [x] Verified-business badge on the place
-- [ ] Owner can reply to reviews
+- [x] Owner can reply to reviews (public, one reply per review; moderators can hide)
 - [x] "Featured along your route" in the trip planner for featured businesses within the detour distance (labelled Sponsored); admins set Featured for N days
 - [x] Simple dashboard: how many travelers saved, plan to visit, are here now, and reviews (counts only)
 - [ ] Payment via a hosted checkout link (no billing code) — **blocked: needs the owner's Stripe account + price**

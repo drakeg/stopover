@@ -137,6 +137,7 @@ A campground, diner or attraction can **claim its place**. Open the place and ta
 
 - Shows a ✓ badge on the place, with RV facts (longest rig, big-rig parking, hookups, pets), an offer, a website and a phone number.
 - Gives the owner a counts-only dashboard under Account → My business: how many travelers saved the place, plan to visit, are there now, and reviewed it. Owners never see who.
+- Lets the owner **reply publicly to reviews** of the place (one reply per review; moderators can hide replies).
 - Can be set as **Featured** for N days by an admin (the paid plan). Featured businesses within a trip's detour distance appear under "Featured along your route", always labelled *Sponsored*.
 
 Payment is manual for now; a hosted checkout link is next once a Stripe account and a price are chosen.
