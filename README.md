@@ -1,5 +1,8 @@
 # Stopover
 
+[![License](https://img.shields.io/github/license/drakeg/stopover)](https://github.com/drakeg/stopover/blob/main/LICENSE)
+
+
 <!-- madmallard-badges:start -->
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?logo=docker&logoColor=white)
 
