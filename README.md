@@ -1,12 +1,9 @@
 # Stopover
 
-[![License](https://img.shields.io/github/license/drakeg/stopover)](https://github.com/drakeg/stopover/blob/main/LICENSE)
-
-
 <!-- madmallard-badges:start -->
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?logo=docker&logoColor=white)
 
-[![ci](https://github.com/drakeg/stopover/actions/workflows/ci.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/ci.yml) [![deploy](https://github.com/drakeg/stopover/actions/workflows/deploy.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/deploy.yml) [![keepalive](https://github.com/drakeg/stopover/actions/workflows/keepalive.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/keepalive.yml) [![release](https://github.com/drakeg/stopover/actions/workflows/release.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/release.yml) [![Issues](https://img.shields.io/github/issues/drakeg/stopover)](https://github.com/drakeg/stopover/issues) [![Pull requests](https://img.shields.io/github/issues-pr/drakeg/stopover)](https://github.com/drakeg/stopover/pulls)
+[![ci](https://github.com/drakeg/stopover/actions/workflows/ci.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/ci.yml) [![deploy](https://github.com/drakeg/stopover/actions/workflows/deploy.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/deploy.yml) [![keepalive](https://github.com/drakeg/stopover/actions/workflows/keepalive.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/keepalive.yml) [![release](https://github.com/drakeg/stopover/actions/workflows/release.yml/badge.svg)](https://github.com/drakeg/stopover/actions/workflows/release.yml) [![Issues](https://img.shields.io/github/issues/drakeg/stopover)](https://github.com/drakeg/stopover/issues) [![Pull requests](https://img.shields.io/github/issues-pr/drakeg/stopover)](https://github.com/drakeg/stopover/pulls) [![License](https://img.shields.io/github/license/drakeg/stopover)](https://github.com/drakeg/stopover/blob/main/LICENSE)
 <!-- madmallard-badges:end -->
 
 <!-- stopover-badges: project-specific, maintained by hand (see AGENTS.md) -->
